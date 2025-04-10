@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 164 100% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 160 47% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 190 15% 92%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 160 47% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 190 15% 92%;
+    --input: 190 15% 92%;
+    --ring: 164 100% 24%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 0 0% 20%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 20%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 20%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 164 100% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 160 47% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 30%;
+    --muted-foreground: 0 0% 80%;
+    --accent: 160 47% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 30%;
+    --input: 0 0% 30%;
+    --ring: 164 100% 24%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hover-scale {
+  transition: transform 0.2s ease-in-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
