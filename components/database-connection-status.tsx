@@ -8,6 +8,7 @@ import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react"
 export function DatabaseConnectionStatus() {
   const [status, setStatus] = useState<"loading" | "connected" | "error">("loading")
   const [message, setMessage] = useState<string>("Verificando conexión a la base de datos...")
+  const [availableVars, setAvailableVars] = useState<string[]>([])
   const [isChecking, setIsChecking] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
@@ -37,9 +38,11 @@ export function DatabaseConnectionStatus() {
       if (data.success) {
         setStatus("connected")
         setMessage(data.message || "Conexión establecida correctamente")
+        setAvailableVars(data.availableVars || [])
       } else {
         setStatus("error")
         setMessage(data.error || "No se pudo conectar a la base de datos")
+        setAvailableVars(data.availableVars || [])
       }
     } catch (error) {
       setStatus("error")
@@ -83,12 +86,31 @@ export function DatabaseConnectionStatus() {
       </div>
       <AlertDescription className="mt-2">
         {message}
+        {status === "connected" && availableVars.length > 0 && (
+          <div className="mt-2">
+            <p className="text-sm text-green-600">Variables de entorno disponibles: {availableVars.join(", ")}</p>
+          </div>
+        )}
         {status === "error" && (
           <div className="mt-2">
             <p className="text-sm mb-2">
-              {message.includes("DATABASE_URL")
-                ? "La variable de entorno DATABASE_URL no está configurada. Debe configurar esta variable en su entorno de producción."
-                : "Asegúrate de que la variable de entorno DATABASE_URL esté configurada correctamente."}
+              {availableVars.length > 0 ? (
+                <>
+                  Se encontraron variables de entorno ({availableVars.join(", ")}), pero no se pudo establecer la
+                  conexión. Verifique que las credenciales sean correctas.
+                </>
+              ) : (
+                <>
+                  No se encontraron variables de entorno para la conexión a la base de datos. Asegúrese de que al menos
+                  una de las siguientes variables esté configurada:
+                  <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
+                    <li>DATABASE_URL</li>
+                    <li>POSTGRES_URL</li>
+                    <li>POSTGRES_PRISMA_URL</li>
+                    <li>POSTGRES_URL_NON_POOLING</li>
+                  </ul>
+                </>
+              )}
             </p>
             <Button
               variant="outline"

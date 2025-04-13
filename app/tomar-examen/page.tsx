@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { evaluadoresService } from "@/lib/db-service"
 import { Loader2, ClipboardList, CheckCircle, Clock, Calendar, AlertCircle, X } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
@@ -21,7 +20,6 @@ export default function TomarExamenPage() {
   const [examenes, setExamenes] = useState<any[]>([])
   const [filtroEstado, setFiltroEstado] = useState<string>("Pendiente")
   const [error, setError] = useState<string | null>(null)
-  // Agregar un nuevo estado para el filtro de ID
   const [filtroId, setFiltroId] = useState<string>("")
 
   useEffect(() => {
@@ -31,7 +29,7 @@ export default function TomarExamenPage() {
       return
     }
 
-    if (user.id === null || user.id === undefined) {
+    if (!user.id) {
       setIsLoading(false)
       setError("El usuario no tiene un ID válido")
       return
@@ -42,40 +40,73 @@ export default function TomarExamenPage() {
       setError(null)
 
       try {
-        // Usar la API de evaluador para obtener los exámenes asignados
+        console.log(`Cargando exámenes para el usuario con ID: ${user.id}`)
 
-        // EN ESTA PARTE: Obtener el ID del evaluador asociado al usuario
-        console.log(`Cargando evaluador para usuario ID: ${user.id}`)
-        const evaluador = await evaluadoresService.getByUserId(user.id) // Método a agregar en evaluadoresService
-        if (!evaluador) {
-          throw new Error("No se encontró un evaluador asociado a este usuario")
+        // Obtener el evaluador por ID de usuario - CORREGIDO: URL y parámetro
+        const evaluadorResponse = await fetch(`/api/evaluadores/by-id?userId=${user.id}`)
+
+        if (!evaluadorResponse.ok) {
+          const errorText = await evaluadorResponse.text()
+          console.error("Respuesta completa del error:", errorText)
+
+          let errorMessage
+          try {
+            const errorData = JSON.parse(errorText)
+            errorMessage = errorData.message || `Error ${evaluadorResponse.status}: ${evaluadorResponse.statusText}`
+          } catch (e) {
+            errorMessage = `Error ${evaluadorResponse.status}: ${evaluadorResponse.statusText}`
+          }
+
+          if (evaluadorResponse.status === 404) {
+            throw new Error(`No se encontró un evaluador para este usuario (ID: ${user.id})`)
+          } else {
+            throw new Error(`Error al obtener el evaluador: ${errorMessage}`)
+          }
         }
-        const evaluadorId = evaluador.id
-        console.log(`Evaluador encontrado con ID: ${evaluadorId}, cargando exámenes con estado: ${filtroEstado}`)
 
-        // Construir la URL con el parámetro de estado correcto usando el evaluadorId
-        let url = `/api/evaluador/examenes?evaluadorId=${evaluadorId}`
+        let evaluador
+        try {
+          evaluador = await evaluadorResponse.json()
+        } catch (e) {
+          console.error("Error al parsear la respuesta JSON del evaluador:", e)
+          throw new Error("Error al procesar la respuesta del servidor")
+        }
 
-        // Solo añadir el parámetro de estado si no es "todos"
+        console.log(`Evaluador encontrado con ID: ${evaluador.id}`)
+
+        // Obtener los exámenes del evaluador
+        let url = `/api/evaluadores/${evaluador.id}/examenes`
         if (filtroEstado !== "todos") {
-          url += `&estado=${filtroEstado}`
+          url += `?estado=${filtroEstado}`
         }
 
-        const response = await fetch(url)
+        const examenesResponse = await fetch(url)
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+        if (!examenesResponse.ok) {
+          const errorText = await examenesResponse.text()
+          console.error("Respuesta completa del error:", errorText)
+
+          let errorMessage
+          try {
+            const errorData = JSON.parse(errorText)
+            errorMessage = errorData.message || `Error ${examenesResponse.status}: ${examenesResponse.statusText}`
+          } catch (e) {
+            errorMessage = `Error ${examenesResponse.status}: ${examenesResponse.statusText}`
+          }
+
+          throw new Error(`Error al obtener los exámenes: ${errorMessage}`)
         }
 
-        const data = await response.json()
-        console.log(`Exámenes cargados: ${data.length}`)
+        let examenesData
+        try {
+          examenesData = await examenesResponse.json()
+        } catch (e) {
+          console.error("Error al parsear la respuesta JSON de los exámenes:", e)
+          throw new Error("Error al procesar la respuesta del servidor")
+        }
 
-        // Verificar que los exámenes cargados coincidan con el filtro seleccionado
-        const examenesFiltered =
-          filtroEstado === "todos" ? data : data.filter((examen: any) => examen.estado === filtroEstado)
-
-        setExamenes(examenesFiltered)
+        console.log(`Exámenes cargados: ${examenesData.length}`)
+        setExamenes(examenesData)
       } catch (error) {
         console.error("Error al cargar exámenes:", error)
         setError(error instanceof Error ? error.message : "Error desconocido al cargar exámenes")
@@ -93,7 +124,6 @@ export default function TomarExamenPage() {
   }, [user, filtroEstado, toast])
 
   const handleTomarExamen = (id: number) => {
-    // Pasar el ID del alumno_examen a la página de detalle
     console.log(`Redirigiendo a /tomar-examen/${id}`)
     router.push(`/tomar-examen/${id}`)
   }
@@ -124,30 +154,49 @@ export default function TomarExamenPage() {
     }
   }
 
-  // Manejar el caso específico de DATABASE_URL no configurado
-  if (error && error.includes("DATABASE_URL")) {
+  // Mostrar un mensaje específico para usuarios que no son evaluadores
+  if (error && error.includes("No se encontró un evaluador")) {
     return (
       <div className="container mx-auto p-4">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl text-red-600">Error de configuración</CardTitle>
+            <CardTitle className="text-xl text-amber-600">Acceso restringido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>No tienes permisos de evaluador</AlertTitle>
+              <AlertDescription>
+                <p>Tu cuenta no está registrada como evaluador en el sistema.</p>
+                <p className="mt-2">
+                  Si crees que esto es un error, contacta al administrador para que te asigne el rol de evaluador.
+                </p>
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Mostrar un mensaje específico para errores de base de datos
+  if (error && error.includes("base de datos")) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl text-red-600">Error de conexión</CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error crítico de base de datos</AlertTitle>
+              <AlertTitle>Error de base de datos</AlertTitle>
               <AlertDescription>
-                La variable de entorno DATABASE_URL no está configurada. Esta variable es necesaria para conectarse a la
-                base de datos.
-                <div className="mt-4">
-                  <p className="text-sm font-medium">Para solucionar este problema:</p>
-                  <ol className="list-decimal pl-5 mt-2 space-y-1 text-sm">
-                    <li>Vaya a la configuración de su proyecto en Vercel</li>
-                    <li>Navegue a la sección "Environment Variables"</li>
-                    <li>Agregue la variable DATABASE_URL con el valor de su conexión a Neon Database</li>
-                    <li>Redespliege la aplicación</li>
-                  </ol>
-                </div>
+                <p>{error}</p>
+                <p className="mt-2">
+                  Por favor, verifica la conexión a la base de datos y asegúrate de que las variables de entorno estén
+                  configuradas correctamente.
+                </p>
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -211,7 +260,6 @@ export default function TomarExamenPage() {
                 size="sm"
                 className="mt-4"
                 onClick={() => {
-                  // Intentar recargar la página
                   window.location.reload()
                 }}
               >
@@ -237,10 +285,14 @@ export default function TomarExamenPage() {
               </TableHeader>
               <TableBody>
                 {examenes
-                  .filter((examen) => (filtroId ? examen.alumno_id.toString().includes(filtroId) : true))
+                  .filter((examen) =>
+                    filtroId
+                      ? examen.numero_identificacion && examen.numero_identificacion.toString().includes(filtroId)
+                      : true
+                  )
                   .map((examen) => (
-                    <TableRow key={examen.alumno_id}>
-                      <TableCell className="font-medium">#{examen.alumno_id}</TableCell>
+                    <TableRow key={examen.id}>
+                      <TableCell className="font-medium">#{examen.numero_identificacion}</TableCell>
                       <TableCell>{examen.examen_titulo}</TableCell>
                       <TableCell>
                         <Badge variant={getBadgeVariant(examen.estado)} className="flex w-fit items-center">
@@ -251,7 +303,9 @@ export default function TomarExamenPage() {
                       <TableCell>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                          {examen.fecha_examen ? new Date(examen.fecha_examen).toLocaleDateString() : "No iniciado"}
+                          {examen.fecha_aplicacion
+                            ? new Date(examen.fecha_aplicacion).toLocaleDateString()
+                            : "No iniciado"}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -269,9 +323,7 @@ export default function TomarExamenPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
-                              router.push(`/examenes/${examen.examen_id}/resultados?alumnoId=${examen.alumno_id}`)
-                            }
+                            onClick={() => router.push(`/evaluador/resultados/${examen.id}`)}
                           >
                             Ver Resultados
                           </Button>

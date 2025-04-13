@@ -13,11 +13,12 @@ type User = {
 
 type AuthContextType = {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
-  logout: () => void
   isAuthenticated: boolean
   isAdmin: boolean
   isEvaluador: boolean
+  isColaborador: boolean
+  login: (email: string, password: string) => Promise<boolean>
+  logout: () => void
   loading: boolean
 }
 
@@ -26,6 +27,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isEvaluador, setIsEvaluador] = useState(false)
+  const [isColaborador, setIsColaborador] = useState(false)
   const router = useRouter()
 
   // Cargar usuario desde localStorage al iniciar
@@ -59,7 +64,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const userData = await response.json()
+
+      // Actualizar el estado
       setUser(userData)
+      setIsAuthenticated(true)
+      setIsAdmin(userData.role === "admin")
+      setIsEvaluador(userData.role === "evaluador")
+      setIsColaborador(userData.role === "colaborador")
+
       localStorage.setItem("user", JSON.stringify(userData))
       return true
     } catch (error) {
@@ -74,27 +86,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null)
     localStorage.removeItem("user")
     router.push("/login")
+    setIsAuthenticated(false)
+    setIsAdmin(false)
+    setIsEvaluador(false)
+    setIsColaborador(false)
   }
 
-  const isAuthenticated = !!user
-  const isAdmin = user?.role === "admin"
-  const isEvaluador = user?.role === "evaluador"
+  const value = {
+    user,
+    isAuthenticated,
+    isAdmin,
+    isEvaluador,
+    isColaborador,
+    login,
+    logout,
+    loading,
+  }
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        isAuthenticated,
-        isAdmin,
-        isEvaluador,
-        loading,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => {

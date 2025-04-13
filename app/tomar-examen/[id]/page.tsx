@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/context/auth-context"
-import { evaluadoresService } from "@/lib/db-service"
 import { Slider } from "@/components/ui/slider"
 
 // Componente para mostrar el detalle de un examen asignado a un alumno
@@ -46,6 +45,8 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   const [mostrarAlertaEstacionIncompleta, setMostrarAlertaEstacionIncompleta] = useState(false)
   const [estacionIncompleta, setEstacionIncompleta] = useState<number | null>(null)
   const [preguntasSinResponder, setPreguntasSinResponder] = useState<number[]>([])
+  const esExamenDeUnaSolaEstacion = examen?.estaciones?.length === 1
+
 
   // Cargar el examen
   useEffect(() => {
@@ -56,12 +57,17 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
         console.log(`Cargando examen con ID de asignación: ${params.id}`)
 
-        // Obtener el evaluador actual
-        const evaluador = await evaluadoresService.getByUserId(user?.id)
-        console.log(`Id Evaluador: ${evaluador?.id || "No encontrado"}`)
+        // Primero obtenemos el evaluador asociado al usuario por su email
+        const evaluadorResponse = await fetch(`/api/evaluadores/by-id?userId=${user.id}`)
 
-        if (!evaluador) {
-          throw new Error("No se encontró información del evaluador")
+        if (!evaluadorResponse.ok) {
+          if (evaluadorResponse.status === 404) {
+            throw new Error(`No se encontró un evaluador con el id ${user.id}`)
+          } else {
+            const errorText = await evaluadorResponse.text()
+            console.error("Respuesta de error completa:", errorText)
+            throw new Error(`Error al obtener el evaluador: ${evaluadorResponse.statusText}`)
+          }
         }
 
         // Obtener el examen asignado
@@ -232,10 +238,10 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       console.log("Examen iniciado:", data)
       setExamen((prev: any) => ({ ...prev, estado: data.estado, fecha_inicio: data.fecha_inicio }))
 
-      toast({
-        title: "Examen iniciado",
-        description: "El examen ha sido iniciado correctamente.",
-      })
+      //toast({
+        //title: "Examen iniciado",
+        //description: "El examen ha sido iniciado correctamente.",
+      //})
     } catch (error) {
       console.error("Error al iniciar el examen:", error)
       toast({
@@ -405,6 +411,11 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
   // Manejar clic en el botón "Guardar"
   const handleGuardarClick = async (estacionIndex: number) => {
+    if (esExamenDeUnaSolaEstacion) {
+      await guardarYFinalizarExamen(estacionIndex)
+      return
+    }
+    
     // Verificar si todas las preguntas están respondidas
     if (!verificarEstacionCompleta(estacionIndex)) {
       setMostrarAlertaEstacionIncompleta(true)
@@ -486,6 +497,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
           respuestas: respuestasAGuardar,
@@ -495,8 +507,23 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       setProgresoGuardado(50)
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `Error al guardar las respuestas: ${response.status}`)
+        const contentType = response.headers.get("content-type")
+
+        if (!contentType?.includes("application/json")) {
+          const errorText = await response.text()
+          console.error("Respuesta no es JSON:", errorText)
+          throw new Error(`Error al guardar las respuestas: Respuesta del servidor no es JSON`)
+        }
+        const contentTypeHeader = response.headers.get("content-type")
+
+        if (contentTypeHeader?.includes("application/json")) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || `Error al guardar las respuestas: ${response.status}`)
+        } else {
+          const errorText = await response.text()
+          console.error("Respuesta de error NO JSON:", errorText)
+          throw new Error(`Error inesperado del servidor. Código ${response.status}`)
+        }
       }
 
       const data = await response.json()
@@ -572,14 +599,14 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       let puntajeTotal = 0
 
       for (const pregunta of estacion.preguntas) {
-        const respuestaActual = respuestas[pregunta.id]
+        const respuestaActual = respuestas[pregunta.id].toLowerCase()
 
         // Si hay respuesta y la pregunta tiene puntaje
         if (respuestaActual !== undefined && pregunta.puntaje) {
           const puntajePregunta = Number(pregunta.puntaje) || 0
 
           // Evaluar según el tipo de respuesta
-          if (respuestaActual === "SI") {
+          if (respuestaActual === "si") {
             // Si la respuesta es "SI", corresponde el 100% del puntaje
             puntajeTotal += puntajePregunta
           } else if (respuestaActual === "parcialmente") {
@@ -753,6 +780,94 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
     }, 1000)
   }
 
+  const guardarYFinalizarExamen = async (estacionIndex: number) => {
+  try {
+    setGuardando(true)
+    setMostrarProgreso(true)
+    setProgresoGuardado(10)
+
+    const estacionActual = examen.estaciones[estacionIndex]
+    const alumnoExamenId = Number(params.id)
+
+    // Preparar respuestas
+    const respuestasAGuardar = estacionActual.preguntas.map((pregunta: any) => ({
+      pregunta_id: pregunta.id,
+      respuesta_texto: respuestas[pregunta.id],
+    }))
+
+    // Calcular puntaje de la estación
+    let puntajeTotal = 0
+    for (const pregunta of estacionActual.preguntas) {
+      const respuestaActual = respuestas[pregunta.id]?.toLowerCase()
+      const puntajePregunta = Number(pregunta.puntaje) || 0
+
+      if (respuestaActual === "si") {
+        puntajeTotal += puntajePregunta
+      } else if (respuestaActual === "parcialmente") {
+        puntajeTotal += puntajePregunta * 0.5
+      }
+    }
+
+    setProgresoGuardado(40)
+
+    // Calcular calificación final solo con esta estación (sin fetch al backend)
+    const estacionesCompletadas = examen.estaciones.filter((_, i) => estacionCompletada[`estacion-${i}`] === true)
+    const puntajesPrevios = estacionesCompletadas.map((_, i) => {
+      return examen.estaciones[i].puntaje_guardado || 0
+    })
+
+    const sumaPrevios = puntajesPrevios.reduce((acc, val) => acc + val, 0)
+    const totalEstaciones = estacionesCompletadas.length + 1 // Esta estación todavía no estaba marcada como completa
+    const calificacionFinal = (sumaPrevios + puntajeTotal) / totalEstaciones
+
+    setProgresoGuardado(60)
+
+    // Enviar todo en una sola llamada al backend
+    const response = await fetch("/api/evaluador/finalizar-estacion-examen", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        alumno_examen_id: alumnoExamenId,
+        estacion_id: estacionActual.id,
+        respuestas: respuestasAGuardar,
+        puntaje_estacion: puntajeTotal,
+        observaciones_estacion: observacionesEstacion[`estacion-${estacionIndex}`] || "",
+        calificacion_examen: calificacionFinal,
+        observaciones_examen: observacionesExamen,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error("Error al guardar y finalizar examen")
+    }
+
+    setProgresoGuardado(100)
+
+    toast({
+      title: "Examen finalizado",
+      description: `Calificación final: ${calificacionFinal.toFixed(2)} puntos`,
+    })
+
+    // Redirigir luego de una pausa
+    setTimeout(() => {
+      setMostrarProgreso(false)
+      router.push("/tomar-examen")
+    }, 500)
+  } catch (error) {
+    console.error("Error en guardarYFinalizarExamen:", error)
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Fallo el guardado final",
+      variant: "destructive",
+    })
+  } finally {
+    setGuardando(false)
+  }
+}
+
   if (loading) {
     return (
       <div className="container mx-auto p-4">
@@ -823,8 +938,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         <CardHeader ref={contentRef} className="border-b">
           <CardTitle className="text-2xl">{examen.examen_titulo || examen.titulo}</CardTitle>
           <CardDescription>
-            ID Alumno: {examen.alumno_id} | Alumno: {examen.alumno_nombre} {examen.alumno_apellido} | Estado:{" "}
-            {examen.estado}
+            ID Alumno: {examen.alumno_id} | Alumno: {examen.fecha_inicio}| Estado: {examen.estado}
           </CardDescription>
         </CardHeader>
 

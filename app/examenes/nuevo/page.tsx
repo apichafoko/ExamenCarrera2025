@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { examenesService } from "@/lib/db-service"
 
 export default function NuevoExamenPage() {
   const router = useRouter()
@@ -35,15 +34,23 @@ export default function NuevoExamenPage() {
     setIsLoading(true)
 
     try {
-      // Crear el examen en la base de datos
-      const nuevoExamen = await examenesService.create(examen)
+      const response = await fetch("/api/examenes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(examen),
+      })
+
+      if (!response.ok) throw new Error("Error al crear el examen")
+
+      const nuevoExamen = await response.json()
 
       toast({
         title: "Examen creado",
         description: "El examen ha sido creado correctamente. Ahora puedes agregar estaciones y preguntas.",
       })
 
-      // Redirigir a la página de edición del examen
       setTimeout(() => {
         setIsLoading(false)
         if (nuevoExamen && nuevoExamen.id) {

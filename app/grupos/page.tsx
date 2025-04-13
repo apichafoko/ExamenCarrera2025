@@ -3,10 +3,6 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   PlusCircle,
   Search,
@@ -17,9 +13,17 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
+  Trash2,
+  Lock,
 } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
+import { Badge } from "@/components/ui/badge"
+import { cn, formatDate } from "@/lib/utils"
 
 export default function GruposPage() {
   const [grupos, setGrupos] = useState<any[]>([])
@@ -35,7 +39,6 @@ export default function GruposPage() {
       setIsLoading(true)
       setError(null)
 
-      console.log("Cargando grupos...")
       const response = await fetch("/api/grupos", {
         method: "GET",
         headers: {
@@ -51,18 +54,14 @@ export default function GruposPage() {
       }
 
       const data = await response.json()
-      console.log("Datos recibidos:", data)
-
       if (Array.isArray(data)) {
         setGrupos(data)
       } else {
-        console.error("Los datos recibidos no son un array:", data)
         setGrupos([])
         setError("Los datos recibidos no tienen el formato esperado")
       }
     } catch (error) {
-      console.error("Error cargando grupos:", error)
-      setError(error instanceof Error ? error.message : "Error desconocido al cargar grupos")
+      setError(error instanceof Error ? error.message : "Error desconocido")
       toast({
         title: "Error al cargar grupos",
         description: error instanceof Error ? error.message : "Error desconocido",
@@ -78,28 +77,47 @@ export default function GruposPage() {
     cargarGrupos()
   }, [])
 
-  // Filtrar los grupos
-  const filteredGrupos = grupos.filter((grupo) => {
-    // Verificar que grupo y sus propiedades existan
-    if (!grupo || typeof grupo !== "object") return false
+  const handleEliminar = async (id: number) => {
+    try {
+      const response = await fetch(`/api/grupos/${id}`, {
+        method: "DELETE",
+        headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
+      })
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error: ${response.status}`)
+      }
+
+      setGrupos((prev) => prev.filter((grupo) => grupo.id !== id))
+      toast({
+        title: "Grupo eliminado",
+        description: "El grupo ha sido eliminado correctamente.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al eliminar el grupo",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const filteredGrupos = grupos.filter((grupo) => {
     const nombre = grupo.nombre || ""
     const descripcion = grupo.descripcion || ""
     const activo = grupo.activo !== undefined ? grupo.activo : true
 
-    // Filtrar por término de búsqueda
     const matchesSearch =
       nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       descripcion.toLowerCase().includes(searchTerm.toLowerCase())
 
-    // Filtrar por estado (activo/inactivo)
     const matchesStatus =
       statusFilter === "todos" || (statusFilter === "activos" && activo) || (statusFilter === "inactivos" && !activo)
 
     return matchesSearch && matchesStatus
   })
 
-  // Función para formatear fecha o mostrar texto alternativo
   const formatFechaOTexto = (fecha: string | null | undefined, textoAlternativo = "Sin fecha") => {
     if (!fecha) return textoAlternativo
     try {
@@ -118,7 +136,7 @@ export default function GruposPage() {
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             {isLoading ? "Actualizando..." : "Actualizar"}
           </Button>
-          <Button onClick={() => router.push("/grupos/nuevo")}>
+          <Button onClick={() => router.push("/grupos/new")}>
             <PlusCircle className="mr-2 h-4 w-4" /> Nuevo Grupo
           </Button>
         </div>
@@ -197,19 +215,54 @@ export default function GruposPage() {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle>{grupo.nombre || "Sin nombre"}</CardTitle>
-                    {grupo.activo !== undefined ? (
-                      grupo.activo ? (
-                        <div className="flex items-center text-green-600">
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          <span className="text-xs font-medium">Activo</span>
+                    <div className="flex items-center space-x-2">
+                      {grupo.activo !== undefined ? (
+                        grupo.activo ? (
+                          <div className="flex items-center text-green-600">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            <span className="text-xs font-medium">Activo</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-red-600">
+                            <XCircle className="h-4 w-4 mr-1" />
+                            <span className="text-xs font-medium">Inactivo</span>
+                          </div>
+                        )
+                      ) : null}
+
+                      <HoverCard openDelay={200}>
+                        <HoverCardTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={grupo.cant_alumnos > 0}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEliminar(grupo.id)
+                            }}
+                            className={cn(
+                              "text-destructive",
+                              grupo.cant_alumnos > 0 && "cursor-not-allowed opacity-50",
+                            )}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Eliminar</span>
+                          </Button>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-[260px] text-sm" side="left" align="start" sideOffset={10}>
+                          {grupo.cant_alumnos > 0
+                            ? "No se puede eliminar este grupo porque tiene alumnos asignados."
+                            : "Eliminar grupo"}
+                        </HoverCardContent>
+                      </HoverCard>
+
+                      {grupo.cant_alumnos > 0 && (
+                        <div className="flex items-center space-x-1 text-muted-foreground text-xs">
+                          <Lock className="h-3 w-3" />
+                          <Badge variant="secondary">No eliminable</Badge>
                         </div>
-                      ) : (
-                        <div className="flex items-center text-red-600">
-                          <XCircle className="h-4 w-4 mr-1" />
-                          <span className="text-xs font-medium">Inactivo</span>
-                        </div>
-                      )
-                    ) : null}
+                      )}
+                    </div>
                   </div>
                   <CardDescription>{grupo.descripcion || "Sin descripción"}</CardDescription>
                 </CardHeader>

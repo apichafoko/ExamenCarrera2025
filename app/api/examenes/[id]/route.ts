@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { executeQuery } from "@/lib/db"
+import { successResponse } from "@/lib/api-utils"
+import { alumnosExamenesService } from "@/lib/db-service"
 
 // Optimizar la función GET para reducir el número de consultas
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -98,13 +100,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     examen.estaciones = estaciones
     examen.evaluadores = evaluadores
 
-    return NextResponse.json(examen, {
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    })
+    const alumnos = await alumnosExamenesService.getAlumnosDeExamen(examen.id)
+    examen.alumnos = alumnos
+
+    return successResponse(examen)
   } catch (error) {
     console.error(`Error en GET /api/examenes/${params.id}:`, error)
     return NextResponse.json(

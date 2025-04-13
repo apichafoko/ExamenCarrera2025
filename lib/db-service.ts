@@ -125,7 +125,13 @@ export const alumnosService = {
 // Servicio para hospitales
 export const hospitalesService = {
   getAll: async (): Promise<Hospital[]> => {
-    const query = `SELECT * FROM hospitales ORDER BY nombre`
+    const query = `SELECT 
+    h.*, 
+    COUNT(a.id) AS total_alumnos
+  FROM hospitales h
+  LEFT JOIN alumnos a ON a.hospital_id = h.id
+  GROUP BY h.id
+  ORDER BY h.nombre`
     return executeQuery(query)
   },
   getById: async (id: number): Promise<Hospital | null> => {
@@ -174,9 +180,7 @@ export const evaluadoresService = {
     return executeQuery(query)
   },
   getByUserId: async (userId: number): Promise<Evaluador | null> => {
-    const query = `
-      SELECT * FROM evaluadores WHERE usuario_id = $1
-    `
+    const query = `SELECT * FROM evaluadores WHERE usuario_id = $1`
     const result = await executeQuery<Evaluador>(query, [userId])
     return result.length > 0 ? result[0] : null
   },
@@ -889,10 +893,10 @@ export const alumnosExamenesService = {
     try {
       const query = `
         SELECT a.*, ae.estado
-        FROM alumnos a
-        JOIN alumnos_examenes ae ON a.id = ae.alumno_id
-        WHERE ae.examen_id = $1
-      `
+FROM alumnos a
+JOIN alumnos_examenes ae ON a.id = ae.alumno_id
+WHERE ae.examen_id = $1
+ORDER BY a.apellido, a.nombre`
       return executeQuery(query, [examenId])
     } catch (error) {
       console.error("Error al obtener alumnos del examen:", error)

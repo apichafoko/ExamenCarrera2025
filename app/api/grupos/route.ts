@@ -31,9 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener todos los grupos incluyendo el campo activo
     const grupos = await gruposService.getAll()
-    return NextResponse.json(grupos, {
-      headers: { "Cache-Control": "no-store" },
-    })
+    return successResponse(grupos)
   } catch (error) {
     console.error("Error en GET /api/grupos:", error)
     return NextResponse.json(
@@ -45,16 +43,45 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json()
-    const nuevoGrupo = await gruposService.create(data)
+    const { nombre, fecha, alumnos_ids } = await request.json()
 
+    if (!nombre || !Array.isArray(alumnos_ids) || alumnos_ids.length === 0) {
+      return errorResponse("Faltan datos obligatorios: nombre y alumnos", 400)
+    }
+
+    // Crear grupo
+    const grupoInsertResult = await executeQuery(
+      `INSERT INTO grupos (nombre, fecha_creacion) VALUES ($1, $2) RETURNING *`,
+      [nombre, fecha],
+    )
+
+    const nuevoGrupo = grupoInsertResult[0]
     if (!nuevoGrupo) {
       return errorResponse("No se pudo crear el grupo", 400)
     }
 
+    // Validar que los alumnos no estén ya asignados al grupo
+    const placeholders = alumnos_ids.map((_, idx) => `$${idx + 2}`).join(", ")
+    const alumnosYaAsignados = await executeQuery(
+      `SELECT alumno_id FROM alumnos_grupos WHERE grupo_id = $1 AND alumno_id IN (${placeholders})`,
+      [nuevoGrupo.id, ...alumnos_ids],
+    )
+
+    if (alumnosYaAsignados.length > 0) {
+      const idsRepetidos = alumnosYaAsignados.map((r: any) => r.alumno_id).join(", ")
+      return errorResponse(`Los siguientes alumnos ya están asignados al grupo: ${idsRepetidos}`, 400)
+    }
+
+    // Insertar alumnos asignados al grupo
+    const values = alumnos_ids.map((_, i) => `($1, $${i + 2})`).join(", ")
+    await executeQuery(`INSERT INTO alumnos_grupos (grupo_id, alumno_id) VALUES ${values}`, [
+      nuevoGrupo.id,
+      ...alumnos_ids,
+    ])
+
     return successResponse(nuevoGrupo, 201)
   } catch (error) {
     console.error("Error en POST /api/grupos:", error)
-    return errorResponse(error)
+    return errorResponse("Error interno al crear el grupo", 500)
   }
 }

@@ -6,14 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Edit, Calendar, Users, User, CheckCircle, XCircle, Loader2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useEffect, useState } from "react"
-import { useAppContext } from "@/context/app-context"
+import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
-import { gruposService } from "@/lib/db-service"
 
 export default function DetalleGrupoPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { grupos } = useAppContext()
+  const { toast } = useToast()
   const id = Number.parseInt(params.id)
   const [grupo, setGrupo] = useState<any>(null)
   const [alumnosGrupo, setAlumnosGrupo] = useState<any[]>([])
@@ -21,7 +20,7 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
   const [error, setError] = useState<string | null>(null)
 
   // Función para formatear fecha o mostrar texto alternativo
-  const formatFechaOTexto = (fecha, textoAlternativo = "Sin fecha") => {
+  const formatFechaOTexto = (fecha: string | null | undefined, textoAlternativo = "Sin fecha") => {
     if (!fecha) return textoAlternativo
     try {
       return formatDate(fecha)
@@ -30,58 +29,43 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
     }
   }
 
-  // Este useEffect se ejecutará cada vez que cambie el array de grupos en el contexto
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
-      setError(null)
+    const fetchGrupo = async () => {
       try {
-        // Buscar el grupo por ID
-        const grupoEncontrado = await gruposService.getById(Number(id))
+        setIsLoading(true)
+        setError(null)
 
-        if (grupoEncontrado) {
-          setGrupo(grupoEncontrado)
+        // Obtener datos del grupo y sus alumnos
+        const response = await fetch(`/api/grupos/${id}`)
 
-          // Cargar los alumnos del grupo
-          const alumnos = await cargarAlumnosGrupo(id)
-          setAlumnosGrupo(alumnos)
-        } else {
-          setError("Grupo no encontrado")
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || `Error: ${response.status}`)
         }
+
+        const data = await response.json()
+        setGrupo(data)
+        setAlumnosGrupo(data.alumnos || [])
       } catch (error) {
-        setError("Error al cargar el grupo")
+        console.error("Error cargando grupo:", error)
+        setError(error instanceof Error ? error.message : "Error desconocido al cargar grupo")
+        toast({
+          title: "Error al cargar datos",
+          description: error instanceof Error ? error.message : "Error desconocido",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchData()
-  }, [id, router, grupos]) // Añadimos grupos como dependencia
-
-  // Cargar los alumnos del grupo desde la API
-  const cargarAlumnosGrupo = async (grupoId) => {
-    try {
-      const response = await fetch(`/api/grupos/${grupoId}/alumnos`, {
-        method: "GET",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      })
-
-      if (!response.ok) {
-        console.error(`Error al cargar alumnos del grupo ${grupoId}: ${response.status}`)
-        return []
-      }
-
-      const data = await response.json()
-      return Array.isArray(data) ? data : []
-    } catch (error) {
-      console.error(`Error al cargar alumnos del grupo ${grupoId}:`, error)
-      return []
+    if (!isNaN(id)) {
+      fetchGrupo()
+    } else {
+      setError("ID inválido")
+      setIsLoading(false)
     }
-  }
+  }, [id, toast])
 
   if (isLoading) {
     return (
@@ -94,9 +78,21 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
 
   if (error || !grupo) {
     return (
-      <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">No se encontró el grupo solicitado</h1>
-        <Button onClick={() => router.push("/grupos")}>Volver a la lista de grupos</Button>
+      <div className="space-y-4">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/grupos")} className="mr-2">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">Error</h1>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-destructive">{error || "No se pudo cargar la información del grupo"}</p>
+            <Button onClick={() => router.push("/grupos")} className="mt-4">
+              Volver a la lista
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }

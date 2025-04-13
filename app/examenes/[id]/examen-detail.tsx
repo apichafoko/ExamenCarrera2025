@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, Calendar, ListChecks, Users, UserCheck, Loader2, Trash2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
-import { examenesService } from "@/lib/db-service"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function ExamenDetail({ id }: { id: string }) {
@@ -24,11 +23,11 @@ export default function ExamenDetail({ id }: { id: string }) {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await examenesService.getById(Number(id))
-        if (!data) {
-          throw new Error("No se encontró el examen")
-        }
-        console.log("Examen cargado:", data)
+
+        const res = await fetch(`/api/examenes/${id}`)
+        if (!res.ok) throw new Error("No se pudo obtener el examen")
+
+        const data = await res.json()
         setExamen(data)
       } catch (error) {
         console.error("Error cargando examen:", error)
@@ -45,14 +44,14 @@ export default function ExamenDetail({ id }: { id: string }) {
 
   const handleEliminarExamen = async () => {
     try {
-      const success = await examenesService.delete(Number(id))
-      if (success) {
-        toast({
-          title: "Examen eliminado",
-          description: "El examen ha sido eliminado correctamente.",
-        })
-        router.push("/examenes")
-      }
+      const res = await fetch(`/api/examenes/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Error al eliminar el examen")
+
+      toast({
+        title: "Examen eliminado",
+        description: "El examen ha sido eliminado correctamente.",
+      })
+      router.push("/examenes")
     } catch (error) {
       console.error("Error eliminando examen:", error)
       toast({
@@ -112,13 +111,14 @@ export default function ExamenDetail({ id }: { id: string }) {
             <Edit className="mr-2 h-4 w-4" />
             Editar
           </Button>
-          <Button variant="destructive" onClick={handleEliminarExamen} disabled={examen.tieneAlumnos}>
+          <Button variant="destructive" onClick={handleEliminarExamen} disabled={examen.alumnos.length > 0}>
             <Trash2 className="mr-2 h-4 w-4" />
             Eliminar Examen
           </Button>
         </div>
       </div>
 
+      {/* Información general */}
       <Card>
         <CardHeader>
           <CardTitle>Información General</CardTitle>
@@ -138,6 +138,7 @@ export default function ExamenDetail({ id }: { id: string }) {
         </CardContent>
       </Card>
 
+      {/* Tabs: Estaciones, Alumnos, Evaluadores */}
       <Tabs defaultValue="estaciones" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="estaciones" className="flex items-center">
@@ -153,6 +154,7 @@ export default function ExamenDetail({ id }: { id: string }) {
             Evaluadores
           </TabsTrigger>
         </TabsList>
+
         <TabsContent value="estaciones" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -186,6 +188,7 @@ export default function ExamenDetail({ id }: { id: string }) {
             </CardContent>
           </Card>
         </TabsContent>
+
         <TabsContent value="alumnos" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -200,18 +203,18 @@ export default function ExamenDetail({ id }: { id: string }) {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Apellido</TableHead>
                       <TableHead>Nombre</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead>Documento</TableHead>
                       <TableHead>Estado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {examen.alumnos.map((alumno: any) => (
                       <TableRow key={alumno.id}>
-                        <TableCell className="font-medium">
-                          {alumno.alumno_nombre} {alumno.alumno_apellido}
-                        </TableCell>
-                        <TableCell>{alumno.email || "No disponible"}</TableCell>
+                        <TableCell className="font-medium">{alumno.apellido}</TableCell>
+                        <TableCell className="font-medium">{alumno.nombre}</TableCell>
+                        <TableCell>{alumno.documento || "No disponible"}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
@@ -235,6 +238,7 @@ export default function ExamenDetail({ id }: { id: string }) {
             </CardContent>
           </Card>
         </TabsContent>
+
         <TabsContent value="evaluadores" className="space-y-4 mt-4">
           <Card>
             <CardHeader>

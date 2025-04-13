@@ -76,7 +76,9 @@ export default function AlumnosPage() {
     (alumno) =>
       (alumno.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
       (alumno.apellido || "").toLowerCase().includes(busqueda.toLowerCase()) ||
-      (alumno.email || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+      String(alumno.documento || "")
+        .toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
       (alumno.hospital_nombre || "").toLowerCase().includes(busqueda.toLowerCase()),
   )
 
@@ -182,13 +184,19 @@ export default function AlumnosPage() {
                   <TableHead>
                     <div className="flex items-center">
                       <Mail className="mr-2 h-4 w-4" />
-                      Email
+                      Documento
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center">
                       <Phone className="mr-2 h-4 w-4" />
-                      Teléfono
+                      Promocion
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center">
+                      <Building className="mr-2 h-4 w-4" />
+                      Sede
                     </div>
                   </TableHead>
                   <TableHead>
@@ -197,6 +205,7 @@ export default function AlumnosPage() {
                       Hospital
                     </div>
                   </TableHead>
+
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -206,8 +215,9 @@ export default function AlumnosPage() {
                     <TableRow key={alumno.id} className="hover-scale">
                       <TableCell className="font-medium">{alumno.id}</TableCell>
                       <TableCell>{`${alumno.nombre || ""} ${alumno.apellido || ""}`}</TableCell>
-                      <TableCell>{alumno.email || ""}</TableCell>
-                      <TableCell>{alumno.telefono || ""}</TableCell>
+                      <TableCell>{alumno.documento || ""}</TableCell>
+                      <TableCell>{alumno.promocion || ""}</TableCell>
+                      <TableCell>{alumno.sede || ""}</TableCell>
                       <TableCell>{alumno.hospital_nombre || "No asignado"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

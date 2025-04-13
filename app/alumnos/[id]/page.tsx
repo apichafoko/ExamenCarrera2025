@@ -20,7 +20,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useToast } from "@/components/ui/use-toast"
-import { alumnosService } from "@/lib/db-service"
 
 export default function DetalleAlumnoPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -33,8 +32,13 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
   const cargarAlumno = async () => {
     try {
       setIsLoading(true)
-      // Cargar el alumno directamente desde la base de datos
-      const alumnoData = await alumnosService.getById(id)
+      const response = await fetch(`/api/alumnos/${id}`)
+
+      if (!response.ok) {
+        throw new Error("No se pudo cargar el alumno")
+      }
+
+      const alumnoData = await response.json()
 
       if (!alumnoData) {
         toast({
@@ -184,7 +188,9 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
                     <TableRow key={examen.id}>
                       <TableCell className="font-medium">{examen.id}</TableCell>
                       <TableCell>{examen.nombre || examen.titulo}</TableCell>
-                      <TableCell>{new Date(examen.fecha || examen.fecha_aplicacion).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {new Date(examen.fecha_aplicacion || examen.fecha_aplicacion).toLocaleDateString()}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={examen.estado === "Completado" ? "default" : "outline"}>{examen.estado}</Badge>
                       </TableCell>

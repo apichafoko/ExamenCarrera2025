@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { alumnosService, hospitalesService } from "@/lib/db-service"
 
 export default function EditarAlumnoPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -32,8 +31,13 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
       try {
         setIsDataLoading(true)
 
-        // Cargar el alumno y los hospitales en paralelo
-        const [alumnoData, hospitalesData] = await Promise.all([alumnosService.getById(id), hospitalesService.getAll()])
+        const [alumnoRes, hospitalesRes] = await Promise.all([fetch(`/api/alumnos/${id}`), fetch("/api/hospitales")])
+
+        if (!alumnoRes.ok) throw new Error("No se pudo obtener el alumno")
+        if (!hospitalesRes.ok) throw new Error("No se pudo obtener los hospitales")
+
+        const alumnoData = await alumnoRes.json()
+        const hospitalesData = await hospitalesRes.json()
 
         if (!alumnoData) {
           toast({
@@ -45,7 +49,6 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
           return
         }
 
-        // Asegurarse de que todos los campos tengan valores definidos
         setAlumno({
           id: alumnoData.id,
           nombre: alumnoData.nombre || "",
@@ -77,15 +80,21 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
     setIsLoading(true)
 
     try {
-      // Actualizar el alumno en la base de datos
-      await alumnosService.update(alumno.id, alumno)
+      const response = await fetch(`/api/alumnos/${alumno.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(alumno),
+      })
+
+      if (!response.ok) throw new Error("Error al actualizar el alumno")
 
       toast({
         title: "Cambios guardados",
         description: "Los datos del alumno han sido actualizados correctamente.",
       })
 
-      // Redirigir después de un breve retraso para mostrar el estado de carga
       setTimeout(() => {
         setIsLoading(false)
         router.push(`/alumnos/${id}`)
@@ -143,7 +152,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
               <Label htmlFor="nombre">Nombre</Label>
               <Input
                 id="nombre"
-                value={alumno.nombre || ""}
+                value={alumno.nombre}
                 onChange={(e) => setAlumno({ ...alumno, nombre: e.target.value })}
               />
             </div>
@@ -151,7 +160,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
               <Label htmlFor="apellido">Apellido</Label>
               <Input
                 id="apellido"
-                value={alumno.apellido || ""}
+                value={alumno.apellido}
                 onChange={(e) => setAlumno({ ...alumno, apellido: e.target.value })}
               />
             </div>
@@ -160,7 +169,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
               <Input
                 id="email"
                 type="email"
-                value={alumno.email || ""}
+                value={alumno.email}
                 onChange={(e) => setAlumno({ ...alumno, email: e.target.value })}
               />
             </div>
@@ -168,7 +177,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
               <Label htmlFor="telefono">Teléfono</Label>
               <Input
                 id="telefono"
-                value={alumno.telefono || ""}
+                value={alumno.telefono}
                 onChange={(e) => setAlumno({ ...alumno, telefono: e.target.value })}
               />
             </div>

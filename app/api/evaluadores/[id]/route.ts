@@ -23,6 +23,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
+export async function GETByUserId(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    console.log(searchParams.get("id"))
+    const id = Number.parseInt(searchParams.get("id"))
+
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 })
+    }
+
+    const evaluador = await evaluadoresService.GETByUserId(id)
+
+    if (!evaluador) {
+      return NextResponse.json({ error: "Evaluador no encontrado" }, { status: 404 })
+    }
+
+    return createSuccessResponse(evaluador)
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const id = Number.parseInt(params.id)

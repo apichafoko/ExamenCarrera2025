@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
@@ -17,6 +18,7 @@ import {
   UsersRound,
   ClipboardList,
   Settings,
+  BadgeIcon as IdCard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -33,7 +35,7 @@ import {
 export function MainNav() {
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, logout, isAuthenticated, isAdmin, isEvaluador } = useAuth()
+  const { user, logout, isAuthenticated, isAdmin, isEvaluador, isColaborador } = useAuth()
 
   // Si no está autenticado y no está en la página de login, no mostrar la navegación
   if (!isAuthenticated && pathname !== "/login") {
@@ -45,7 +47,7 @@ export function MainNav() {
     return null
   }
 
-  // Rutas para administradores
+  // Rutas para administradores y colaboradores
   const adminRoutes = [
     {
       href: "/",
@@ -89,6 +91,12 @@ export function MainNav() {
       icon: <ClipboardList className="h-5 w-5 mr-2" />,
       active: pathname === "/asignar-examen",
     },
+    {
+      href: "/asignacion-identificacion",
+      label: "Asignar Identificación",
+      icon: <IdCard className="h-5 w-5 mr-2" />,
+      active: pathname === "/asignacion-identificacion" || pathname.startsWith("/asignacion-identificacion/"),
+    },
   ]
 
   // Rutas para evaluadores
@@ -108,7 +116,7 @@ export function MainNav() {
   ]
 
   // Seleccionar las rutas según el rol
-  const routes = isAdmin ? adminRoutes : evaluadorRoutes
+  const routes = isAdmin || isColaborador ? adminRoutes : evaluadorRoutes
 
   return (
     <nav className="bg-white shadow-md dark:bg-gray-900">
@@ -118,6 +126,13 @@ export function MainNav() {
             <Link href="/" className="flex items-center">
               <BookOpen className="h-8 w-8 text-primary" />
               <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">ExamenCarrera</span>
+              <Image
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/46d6e92c-4b78-436e-8197-bd67bfedd63f-uVRMpJvLmi72i0gpmiUrpALr5vEN4H.png"
+                alt="Logo AAARBA"
+                width={32}
+                height={32}
+                className="ml-2"
+              />
             </Link>
           </div>
 
@@ -151,7 +166,7 @@ export function MainNav() {
                   <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                   <DropdownMenuLabel className="font-normal text-sm">{user?.nombre}</DropdownMenuLabel>
                   <DropdownMenuLabel className="font-normal text-xs text-muted-foreground">
-                    {isAdmin ? "Administrador" : "Evaluador"}
+                    {isAdmin ? "Administrador" : isColaborador ? "Colaborador" : "Evaluador"}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -181,7 +196,7 @@ export function MainNav() {
                 <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                 <DropdownMenuLabel className="font-normal text-sm">{user?.nombre}</DropdownMenuLabel>
                 <DropdownMenuLabel className="font-normal text-xs text-muted-foreground">
-                  {isAdmin ? "Administrador" : "Evaluador"}
+                  {isAdmin ? "Administrador" : isColaborador ? "Colaborador" : "Evaluador"}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

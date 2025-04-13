@@ -509,20 +509,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
       estado: examen.estado || "",
       evaluadores_ids: selectedEvaluadores,
       estaciones: examen.estaciones.map((estacion: any) => {
-        const estacionProcesada: any = {
-          titulo: estacion.titulo || "",
-          descripcion: estacion.descripcion || "",
-          duracion_minutos: estacion.duracion_minutos || 15,
-          orden: estacion.orden || 1,
-          activo: estacion.activo !== undefined ? estacion.activo : true,
-          examen_id: examen.id,
-        }
-
-        if (!estacion.es_nuevo && estacion.id > 0) {
-          estacionProcesada.id = estacion.id
-        }
-
-        estacionProcesada.preguntas = estacion.preguntas.map((pregunta: any) => {
+        const preguntasProcesadas = estacion.preguntas.map((pregunta: any) => {
           const preguntaProcesada: any = {
             texto: pregunta.texto || "",
             tipo: pregunta.tipo || "texto_libre",
@@ -563,6 +550,26 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
 
           return preguntaProcesada
         })
+
+        const puntaje_maximo = preguntasProcesadas.reduce(
+          (total: number, pregunta: any) => total + (Number(pregunta.puntaje) || 0),
+          0,
+        )
+
+        const estacionProcesada: any = {
+          titulo: estacion.titulo || "",
+          descripcion: estacion.descripcion || "",
+          duracion_minutos: estacion.duracion_minutos || 15,
+          orden: estacion.orden || 1,
+          activo: estacion.activo !== undefined ? estacion.activo : true,
+          examen_id: examen.id,
+          preguntas: preguntasProcesadas,
+          puntaje_maximo,
+        }
+
+        if (!estacion.es_nuevo && estacion.id > 0) {
+          estacionProcesada.id = estacion.id
+        }
 
         return estacionProcesada
       }),

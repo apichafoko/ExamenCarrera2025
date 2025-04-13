@@ -19,7 +19,8 @@ export default function ResultadosExamenPage({ params }: { params: { id: string 
   // Este useEffect se ejecutará cada vez que cambie el array de resultados en el contexto
   useEffect(() => {
     // Buscar los resultados por ID de examen
-    const resultadosEncontrados = resultados.find((r) => r.id === id)
+    const resultadosEncontrados = Array.isArray(resultados) ? resultados.find((r: any) => r && r.id === id) : undefined
+
     if (resultadosEncontrados) {
       setResultadosExamen(resultadosEncontrados)
     } else {

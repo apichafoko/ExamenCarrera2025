@@ -1,8 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { validateJWT } from "@/lib/auth-service"
 import { executeQuery } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
+    // Verificar autenticación
+    const authHeader = request.headers.get("Authorization")
+    const token = authHeader?.split(" ")[1] || request.cookies.get("token")?.value || ""
+    const userData = await validateJWT(token)
+
+    if (!userData) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    }
+
     const body = await request.json()
     console.log("[SERVER]\nDatos recibidos en POST /api/evaluador/respuestas/batch:", JSON.stringify(body))
 
@@ -87,7 +97,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         message: `${resultados.length} respuestas guardadas correctamente`,
-        resultados,
+        respuestas: resultados,
       })
     } catch (error) {
       // Revertir transacción en caso de error
@@ -95,11 +105,11 @@ export async function POST(request: NextRequest) {
       throw error
     }
   } catch (error) {
-    console.error("Error en POST /api/evaluador/respuestas/batch:", error)
+    console.error("Error al guardar respuestas por lotes:", error)
     return NextResponse.json(
       {
         message: "Error al guardar las respuestas",
-        error: error instanceof Error ? error.message : String(error),
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },
     )

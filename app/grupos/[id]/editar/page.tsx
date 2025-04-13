@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2, ArrowRightCircle, ArrowLeftCircle, Users } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { alumnosService, gruposService } from "@/lib/db-service"
 
 export default function EditarGrupoPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -23,41 +22,41 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
     activo: true,
   })
 
-  // Listas de alumnos
   const [todosLosAlumnos, setTodosLosAlumnos] = useState<any[]>([])
   const [alumnosAsignados, setAlumnosAsignados] = useState<any[]>([])
   const [alumnosNoAsignados, setAlumnosNoAsignados] = useState<any[]>([])
 
   const id = Number.parseInt(params.id)
 
-  // Cargar datos iniciales
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setIsDataLoading(true)
 
-        // Cargar información del grupo
-        const grupoData = await gruposService.getById(id)
-        if (grupoData) {
-          setGrupo({
-            id: grupoData.id,
-            nombre: grupoData.nombre || "",
-            fecha: grupoData.fecha_creacion ? new Date(grupoData.fecha_creacion).toISOString().split("T")[0] : "",
-            activo: grupoData.activo !== undefined ? grupoData.activo : true,
-          })
+        const grupoRes = await fetch(`/api/grupos/${id}`)
+        const alumnosRes = await fetch("/api/alumnos")
+        const asignadosRes = await fetch(`/api/grupos/${id}/alumnos`)
+
+        if (!grupoRes.ok || !alumnosRes.ok || !asignadosRes.ok) {
+          throw new Error("Error al obtener datos")
         }
 
-        // Cargar todos los alumnos
-        const alumnosData = await alumnosService.getAll()
-        setTodosLosAlumnos(alumnosData)
+        const grupoData = await grupoRes.json()
+        const alumnosData = await alumnosRes.json()
+        const alumnosGrupo = await asignadosRes.json()
 
-        // Cargar alumnos del grupo
-        const alumnosGrupo = await fetch(`/api/grupos/${id}/alumnos`).then((res) => res.json())
+        setGrupo({
+          id: grupoData.id,
+          nombre: grupoData.nombre || "",
+          fecha: grupoData.fecha_creacion ? new Date(grupoData.fecha_creacion).toISOString().split("T")[0] : "",
+          activo: grupoData.activo !== undefined ? grupoData.activo : true,
+        })
+
+        setTodosLosAlumnos(alumnosData)
         setAlumnosAsignados(alumnosGrupo)
 
-        // Determinar alumnos no asignados
-        const alumnosIds = new Set(alumnosGrupo.map((a) => a.id))
-        const noAsignados = alumnosData.filter((alumno) => !alumnosIds.has(alumno.id))
+        const alumnosIds = new Set(alumnosGrupo.map((a: any) => a.id))
+        const noAsignados = alumnosData.filter((alumno: any) => !alumnosIds.has(alumno.id))
         setAlumnosNoAsignados(noAsignados)
       } catch (error) {
         console.error("Error cargando datos:", error)
@@ -74,14 +73,12 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
     cargarDatos()
   }, [id, toast])
 
-  // Mover alumno de no asignado a asignado
-  const asignarAlumno = (alumno) => {
+  const asignarAlumno = (alumno: any) => {
     setAlumnosAsignados([...alumnosAsignados, alumno])
     setAlumnosNoAsignados(alumnosNoAsignados.filter((a) => a.id !== alumno.id))
   }
 
-  // Mover alumno de asignado a no asignado
-  const desasignarAlumno = (alumno) => {
+  const desasignarAlumno = (alumno: any) => {
     setAlumnosNoAsignados([...alumnosNoAsignados, alumno])
     setAlumnosAsignados(alumnosAsignados.filter((a) => a.id !== alumno.id))
   }
@@ -99,30 +96,39 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
     setIsLoading(true)
 
     try {
-      // 1. Actualizar la información básica del grupo
-      await gruposService.update(id, {
-        nombre: grupo.nombre,
-        descripcion: grupo.descripcion,
-        fecha: grupo.fecha,
+      // Actualizar grupo
+      await fetch(`/api/grupos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: grupo.nombre,
+          fecha: grupo.fecha,
+          activo: grupo.activo,
+        }),
       })
 
-      // 2. Obtener los IDs de los alumnos actualmente asignados al grupo
-      const alumnosActuales = await fetch(`/api/grupos/${id}/alumnos`).then((res) => res.json())
-      const alumnosActualesIds = new Set(alumnosActuales.map((a) => a.id))
+      // Obtener asignaciones actuales
+      const actualesRes = await fetch(`/api/grupos/${id}/alumnos`)
+      const alumnosActuales = await actualesRes.json()
+      const alumnosActualesIds = new Set(alumnosActuales.map((a: any) => a.id))
+      const alumnosNuevosIds = new Set(alumnosAsignados.map((a: any) => a.id))
 
-      // 3. Obtener los IDs de los alumnos que queremos asignar
-      const alumnosNuevosIds = new Set(alumnosAsignados.map((a) => a.id))
+      const alumnosParaAgregar = alumnosAsignados.filter((a: any) => !alumnosActualesIds.has(a.id))
+      const alumnosParaEliminar = alumnosActuales.filter((a: any) => !alumnosNuevosIds.has(a.id))
 
-      // 4. Determinar qué alumnos hay que agregar (están en nuevos pero no en actuales)
-      const alumnosParaAgregar = alumnosAsignados.filter((a) => !alumnosActualesIds.has(a.id))
-
-      // 5. Determinar qué alumnos hay que eliminar (están en actuales pero no en nuevos)
-      const alumnosParaEliminar = alumnosActuales.filter((a) => !alumnosNuevosIds.has(a.id))
-
-      // 6. Realizar las operaciones de asignación y desasignación
       const operaciones = [
-        ...alumnosParaAgregar.map((alumno) => gruposService.asignarAlumno(id, alumno.id)),
-        ...alumnosParaEliminar.map((alumno) => gruposService.eliminarAlumno(id, alumno.id)),
+        ...alumnosParaAgregar.map((alumno: any) =>
+          fetch(`/api/grupos/${id}/alumnos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ alumnoId: alumno.id }),
+          }),
+        ),
+        ...alumnosParaEliminar.map((alumno: any) =>
+          fetch(`/api/grupos/${id}/alumnos/${alumno.id}`, {
+            method: "DELETE",
+          }),
+        ),
       ]
 
       await Promise.all(operaciones)
@@ -132,7 +138,6 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
         description: "El grupo y sus alumnos han sido actualizados correctamente.",
       })
 
-      // Redirigir después de un breve retraso para mostrar el estado de carga
       setTimeout(() => {
         setIsLoading(false)
         router.push(`/grupos/${id}`)

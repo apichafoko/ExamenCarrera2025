@@ -11,40 +11,43 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { dbService } from "@/lib/db-service"
 
 export default function AsignarExamenPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { toast } = useToast()
-
-  // Estados de UI
   const [isLoading, setIsLoading] = useState(false)
   const [isDataLoading, setIsDataLoading] = useState(true)
-  const [tipoAsignacion, setTipoAsignacion] = useState("alumno") // "alumno" o "grupo"
+  const [tipoAsignacion, setTipoAsignacion] = useState("alumno")
   const [error, setError] = useState<string | null>(null)
 
-  // Estados de selección
   const [examenSeleccionado, setExamenSeleccionado] = useState<number | null>(null)
   const [alumnosSeleccionados, setAlumnosSeleccionados] = useState<number[]>([])
   const [grupoSeleccionado, setGrupoSeleccionado] = useState<number | null>(null)
 
-  // Estados de datos
   const [examenes, setExamenes] = useState<any[]>([])
   const [alumnos, setAlumnos] = useState<any[]>([])
   const [grupos, setGrupos] = useState<any[]>([])
   const [alumnosGrupo, setAlumnosGrupo] = useState<any[]>([])
   const [isLoadingAlumnosGrupo, setIsLoadingAlumnosGrupo] = useState(false)
 
-  // Función para cargar los datos iniciales
+  const router = useRouter()
+  const { toast } = useToast()
+  const searchParams = useSearchParams()
+
   const fetchInitialData = useCallback(async () => {
     setIsDataLoading(true)
     setError(null)
     try {
+      const [examenesRes, alumnosRes, gruposRes] = await Promise.all([
+        fetch("/api/examenes"),
+        fetch("/api/alumnos"),
+        fetch("/api/grupos"),
+      ])
+
+      if (!examenesRes.ok || !alumnosRes.ok || !gruposRes.ok) throw new Error("Error al cargar datos")
+
       const [examenesData, alumnosData, gruposData] = await Promise.all([
-        dbService.examenes.getAll(),
-        dbService.alumnos.getAll(),
-        dbService.grupos.getAll(),
+        examenesRes.json(),
+        alumnosRes.json(),
+        gruposRes.json(),
       ])
 
       setExamenes(examenesData)
@@ -58,60 +61,54 @@ export default function AsignarExamenPage() {
     }
   }, [])
 
-  // Cargar datos iniciales
   useEffect(() => {
     fetchInitialData()
   }, [fetchInitialData])
 
-  // Procesar parámetros de URL
   useEffect(() => {
     const alumnoId = searchParams.get("alumnoId")
     const grupoId = searchParams.get("grupoId")
     const examenId = searchParams.get("examenId")
 
-    // Inicializar selecciones basadas en parámetros de URL
     if (alumnoId) {
       setTipoAsignacion("alumno")
       const alumnoIdNum = Number.parseInt(alumnoId, 10)
-      if (!isNaN(alumnoIdNum)) {
-        setAlumnosSeleccionados((prev) => {
-          // Solo actualizar si es diferente para evitar re-renderizados
-          if (prev.length === 1 && prev[0] === alumnoIdNum) return prev
-          return [alumnoIdNum]
-        })
-      }
+      if (!isNaN(alumnoIdNum)) setAlumnosSeleccionados([alumnoIdNum])
     } else if (grupoId) {
       setTipoAsignacion("grupo")
       const grupoIdNum = Number.parseInt(grupoId, 10)
-      if (!isNaN(grupoIdNum)) {
-        setGrupoSeleccionado(grupoIdNum)
-      }
+      if (!isNaN(grupoIdNum)) setGrupoSeleccionado(grupoIdNum)
     }
 
     if (examenId) {
       const examenIdNum = Number.parseInt(examenId, 10)
-      if (!isNaN(examenIdNum)) {
-        setExamenSeleccionado(examenIdNum)
-      }
+      if (!isNaN(examenIdNum)) setExamenSeleccionado(examenIdNum)
     }
   }, [searchParams])
 
-  // Cargar alumnos del grupo cuando cambia el grupo seleccionado
-  const fetchAlumnosGrupo = useCallback(async (grupoId: number) => {
-    if (!grupoId) return
+  const fetchAlumnosGrupo = useCallback(
+    async (grupoId: number) => {
+      if (!grupoId) return
+      setIsLoadingAlumnosGrupo(true)
+      try {
+        const res = await fetch(`/api/grupos/${grupoId}/alumnos`)
+        if (!res.ok) throw new Error(`Error: ${res.status}`)
+        const data = await res.json()
+        setAlumnosGrupo(data)
+      } catch (err) {
+        console.error(`Error cargando alumnos del grupo ${grupoId}:`, err)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los alumnos del grupo.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoadingAlumnosGrupo(false)
+      }
+    },
+    [toast],
+  )
 
-    setIsLoadingAlumnosGrupo(true)
-    try {
-      const data = await dbService.grupos.getAlumnos(grupoId)
-      setAlumnosGrupo(data)
-    } catch (err) {
-      console.error(`Error cargando alumnos del grupo ${grupoId}:`, err)
-    } finally {
-      setIsLoadingAlumnosGrupo(false)
-    }
-  }, [])
-
-  // Efecto para cargar alumnos cuando cambia el grupo seleccionado
   useEffect(() => {
     if (grupoSeleccionado) {
       fetchAlumnosGrupo(grupoSeleccionado)
@@ -120,53 +117,52 @@ export default function AsignarExamenPage() {
     }
   }, [grupoSeleccionado, fetchAlumnosGrupo])
 
-  // Manejador para cambiar la selección de alumnos
   const handleAlumnoChange = useCallback((alumnoId: number, checked: boolean) => {
     setAlumnosSeleccionados((prev) => {
       if (checked) {
-        if (prev.includes(alumnoId)) return prev
-        return [...prev, alumnoId]
+        return prev.includes(alumnoId) ? prev : [...prev, alumnoId]
       } else {
         return prev.filter((id) => id !== alumnoId)
       }
     })
   }, [])
 
-  // Función para obtener el evaluador asignado a un examen
   async function obtenerEvaluadorDeExamen(examenId: number) {
     try {
-      // Obtener el examen completo con sus evaluadores
-      const examen = await dbService.examenes.getById(examenId)
+      const res = await fetch(`/api/examenes/${examenId}`)
+      if (!res.ok) throw new Error(`Error: ${res.status}`)
+      const examen = await res.json()
 
-      // Verificar si el examen tiene evaluadores asignados
-      if (examen && examen.evaluadores && examen.evaluadores.length > 0) {
-        console.log(`Examen ${examenId} tiene evaluador asignado: ${examen.evaluadores[0].id}`)
-        return Number(examen.evaluadores[0].id)
+      if (examen?.evaluadores?.length > 0) {
+        return examen.evaluadores[0].id
       }
 
-      // Si no hay evaluadores asignados al examen, obtener el primer evaluador disponible
-      //const evaluadores = await dbService.evaluadores.getAll()
-      //if (evaluadores && evaluadores.length > 0) {
-      //console.log(`Usando evaluador por defecto: ${evaluadores[0].id}`)
-      //return Number(evaluadores[0].id)
-      //}
+      // Si no hay evaluadores asignados, obtener el primer evaluador disponible
+      const evalRes = await fetch("/api/evaluadores")
+      if (!evalRes.ok) throw new Error(`Error: ${evalRes.status}`)
+      const evaluadores = await evalRes.json()
 
-      console.error("No se encontraron evaluadores disponibles")
-      return null
+      if (evaluadores.length > 0) {
+        return evaluadores[0].id
+      }
+
+      throw new Error("No hay evaluadores disponibles")
     } catch (error) {
-      console.error(`Error al obtener evaluador para el examen ${examenId}:`, error)
+      console.error(`Error obteniendo evaluador:`, error)
+      toast({
+        title: "Error",
+        description: "No se pudo obtener un evaluador para el examen.",
+        variant: "destructive",
+      })
       return null
     }
   }
 
-  // Función para asignar examen a un alumno
   async function asignarExamenAlumno(examenId: number, alumnoId: number) {
     try {
       // Obtener el evaluador asignado al examen
       const evaluadorId = await obtenerEvaluadorDeExamen(examenId)
-
       if (!evaluadorId) {
-        console.error("No se pudo obtener un evaluador para asignar")
         toast({
           title: "Error",
           description: "No hay evaluadores disponibles para asignar el examen.",
@@ -175,31 +171,38 @@ export default function AsignarExamenPage() {
         return false
       }
 
-      // Verificar si el alumno ya tiene el examen asignado
-      const yaAsignado = await dbService.alumnosExamenes.tieneExamenAsignado(alumnoId, examenId)
-      if (yaAsignado) {
+      // Realizar la asignación
+      const res = await fetch("/api/alumnos-examenes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          alumnoId,
+          examenId,
+          evaluadorId,
+        }),
+      })
+
+      if (res.status === 409) {
+        const { error } = await res.json()
         toast({
-          title: "Advertencia",
-          description: "Este alumno ya tiene asignado este examen.",
-          variant: "default", // o "warning" según tu sistema de notificaciones
+          title: "Ya asignado",
+          description: error || "Este alumno ya tiene el examen asignado.",
+          variant: "default",
         })
         return false
       }
 
-      console.log(`Asignando examen ${examenId} al alumno ${alumnoId} con evaluador ${evaluadorId}`)
-
-      // Llamar al servicio con el ID del evaluador obtenido
-      const resultado = await dbService.alumnosExamenes.asignarExamen(alumnoId, examenId, evaluadorId)
-
-      if (resultado) {
-        toast({
-          title: "Éxito",
-          description: "Examen asignado correctamente al alumno.",
-          variant: "success",
-        })
+      if (!res.ok) {
+        const errorData = await res.text()
+        console.error(`Error en la respuesta: ${res.status} ${errorData}`)
+        throw new Error(`Error al asignar examen: ${res.status}`)
       }
 
-      return resultado
+      const data = await res.json()
+      console.log(`Examen ${examenId} asignado al alumno ${alumnoId}:`, data)
+      return true
     } catch (error) {
       console.error(`Error asignando examen ${examenId} al alumno ${alumnoId}:`, error)
       toast({
@@ -211,17 +214,24 @@ export default function AsignarExamenPage() {
     }
   }
 
-  // También modificar la función asignarExamenGrupo para usar la misma lógica
-  async function asignarExamenGrupo(examenId: number, grupoId: number) {
+  async function asignarExamenGrupo(examenId: number, grupoId: number): Promise<boolean> {
     try {
-      const alumnosGrupo = await dbService.grupos.getAlumnos(grupoId)
-      if (alumnosGrupo.length === 0) return false
+      const res = await fetch(`/api/grupos/${grupoId}/alumnos`)
+      if (!res.ok) throw new Error(`Error: ${res.status}`)
+      const alumnosGrupo = await res.json()
+
+      if (alumnosGrupo.length === 0) {
+        toast({
+          title: "Advertencia",
+          description: "El grupo no tiene alumnos asignados.",
+          variant: "default",
+        })
+        return false
+      }
 
       // Obtener el evaluador asignado al examen
       const evaluadorId = await obtenerEvaluadorDeExamen(examenId)
-
       if (!evaluadorId) {
-        console.error("No se pudo obtener un evaluador para asignar")
         toast({
           title: "Error",
           description: "No hay evaluadores disponibles para asignar el examen.",
@@ -230,22 +240,69 @@ export default function AsignarExamenPage() {
         return false
       }
 
-      console.log(`Asignando examen ${examenId} al grupo ${grupoId} con evaluador ${evaluadorId}`)
+      const asignados: string[] = []
+      const yaAsignados: string[] = []
 
-      let asignacionesExitosas = 0
       for (const alumno of alumnosGrupo) {
-        const resultado = await dbService.alumnosExamenes.asignarExamen(alumno.id, examenId, evaluadorId)
-        if (resultado) asignacionesExitosas++
+        // Realizar la asignación
+        const res = await fetch("/api/alumnos-examenes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            alumnoId: alumno.id,
+            examenId,
+            evaluadorId,
+          }),
+        })
+
+        if (res.status === 409) {
+          yaAsignados.push(`${alumno.nombre} ${alumno.apellido}`)
+          continue
+        }
+
+        if (!res.ok) {
+          const errorData = await res.text()
+          console.error(`Error en la respuesta: ${res.status} ${errorData}`)
+          continue
+        }
+
+        asignados.push(`${alumno.nombre} ${alumno.apellido}`)
       }
 
-      return asignacionesExitosas > 0
+      // Mostrar toast resumen
+      toast({
+        title: "Resultado de la asignación",
+        description: (
+          <div className="space-y-1">
+            {asignados.length > 0 && (
+              <p>
+                ✅ Los nuevos alumnos asignados son: <span className="font-medium">{asignados.join(", ")}</span>
+              </p>
+            )}
+            {yaAsignados.length > 0 && (
+              <p className="text-amber-700">
+                ⚠️ Estos alumnos ya estaban asignados: <span className="font-medium">{yaAsignados.join(", ")}</span>
+              </p>
+            )}
+          </div>
+        ),
+        variant: "default",
+      })
+
+      return asignados.length > 0
     } catch (error) {
       console.error(`Error asignando examen ${examenId} al grupo ${grupoId}:`, error)
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al asignar el examen al grupo.",
+        variant: "destructive",
+      })
       return false
     }
   }
 
-  // Manejador para asignar examen
   const handleAsignar = async () => {
     if (!examenSeleccionado) {
       toast({
@@ -256,104 +313,67 @@ export default function AsignarExamenPage() {
       return
     }
 
-    if (tipoAsignacion === "alumno") {
-      if (alumnosSeleccionados.length === 0) {
-        toast({
-          title: "Error",
-          description: "Debes seleccionar al menos un alumno.",
-          variant: "destructive",
-        })
-        return
-      }
+    setIsLoading(true)
+    let exitoso = false
 
-      setIsLoading(true)
-      try {
+    try {
+      if (tipoAsignacion === "alumno") {
+        if (alumnosSeleccionados.length === 0) {
+          toast({
+            title: "Error",
+            description: "Debes seleccionar al menos un alumno.",
+            variant: "destructive",
+          })
+          setIsLoading(false)
+          return
+        }
+
         let asignacionesExitosas = 0
-        let asignacionesDuplicadas = 0
-
         for (const alumnoId of alumnosSeleccionados) {
           const resultado = await asignarExamenAlumno(examenSeleccionado, alumnoId)
-          if (resultado) {
-            asignacionesExitosas++
-          } else {
-            asignacionesDuplicadas++
-          }
+          if (resultado) asignacionesExitosas++
         }
 
-        if (asignacionesExitosas > 0) {
+        exitoso = asignacionesExitosas > 0
+        if (exitoso) {
           toast({
-            title: "Examen asignado",
-            description: `El examen ha sido asignado a ${asignacionesExitosas} alumno(s) correctamente.${
-              asignacionesDuplicadas > 0 ? ` ${asignacionesDuplicadas} alumno(s) ya tenían el examen asignado.` : ""
-            }`,
+            title: "Éxito",
+            description: `Examen asignado a ${asignacionesExitosas} de ${alumnosSeleccionados.length} alumnos.`,
+            variant: "default",
           })
-
-          // Redirigir al detalle del examen
-          setTimeout(() => {
-            router.push(`/examenes/${examenSeleccionado}?t=${Date.now()}`)
-          }, 1000)
-        } else if (asignacionesDuplicadas > 0) {
+        }
+      } else if (tipoAsignacion === "grupo") {
+        if (!grupoSeleccionado) {
           toast({
-            title: "Asignación no realizada",
-            description: "Todos los alumnos seleccionados ya tenían el examen asignado.",
+            title: "Error",
+            description: "Debes seleccionar un grupo.",
             variant: "destructive",
           })
           setIsLoading(false)
+          return
         }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Ocurrió un error al asignar el examen.",
-          variant: "destructive",
-        })
+
+        exitoso = await asignarExamenGrupo(examenSeleccionado, grupoSeleccionado)
+      }
+
+      if (exitoso) {
+        // Redirigir al detalle del examen después de un breve retraso
+        setTimeout(() => {
+          router.push(`/examenes/${examenSeleccionado}?t=${Date.now()}`)
+        }, 1500)
+      } else {
         setIsLoading(false)
       }
-    } else if (tipoAsignacion === "grupo") {
-      if (!grupoSeleccionado) {
-        toast({
-          title: "Error",
-          description: "Debes seleccionar un grupo.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setIsLoading(true)
-      try {
-        const resultado = await asignarExamenGrupo(examenSeleccionado, grupoSeleccionado)
-
-        if (resultado) {
-          toast({
-            title: "Examen asignado",
-            description: "El examen ha sido asignado al grupo correctamente.",
-          })
-
-          // Redirigir al detalle del examen
-          setTimeout(() => {
-            router.push(`/examenes/${examenSeleccionado}?t=${Date.now()}`)
-          }, 1000)
-        } else {
-          toast({
-            title: "Asignación no realizada",
-            description: "Todos los alumnos del grupo ya tenían el examen asignado o el grupo no tiene alumnos.",
-            variant: "destructive",
-          })
-          setIsLoading(false)
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Ocurrió un error al asignar el examen.",
-          variant: "destructive",
-        })
-        setIsLoading(false)
-      }
+    } catch (error) {
+      console.error("Error en la asignación:", error)
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado durante la asignación.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
     }
   }
-
-  // Obtener objetos seleccionados
-  const examenActual = examenes.find((e) => e.id === examenSeleccionado)
-  const grupoActual = grupos.find((g) => g.id === grupoSeleccionado)
 
   // Renderizar pantalla de carga
   if (isDataLoading) {
@@ -385,6 +405,10 @@ export default function AsignarExamenPage() {
       </div>
     )
   }
+
+  // Obtener objetos seleccionados
+  const examenActual = examenes.find((e) => e.id === examenSeleccionado)
+  const grupoActual = grupos.find((g) => g.id === grupoSeleccionado)
 
   // Renderizar interfaz principal
   return (
@@ -482,7 +506,6 @@ export default function AsignarExamenPage() {
                   </div>
                 </div>
               )}
-
               <div className="mt-4">
                 <h3 className="text-sm font-medium mb-2">Alumnos seleccionados: {alumnosSeleccionados.length}</h3>
               </div>
@@ -541,12 +564,9 @@ export default function AsignarExamenPage() {
                     </Select>
                   </div>
 
-                  {grupoActual && (
+                  {grupoSeleccionado && (
                     <div className="border rounded-md p-4">
-                      <h3 className="text-sm font-medium mb-2">Información del grupo:</h3>
-                      <p className="text-sm mb-2">{grupoActual.descripcion}</p>
-
-                      {/* Mostrar alumnos del grupo seleccionado */}
+                      <h3 className="text-sm font-medium mb-2">Alumnos del grupo:</h3>
                       {isLoadingAlumnosGrupo ? (
                         <div className="text-center py-2">
                           <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
@@ -555,16 +575,13 @@ export default function AsignarExamenPage() {
                       ) : alumnosGrupo.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Este grupo no tiene alumnos asignados.</p>
                       ) : (
-                        <div>
-                          <h3 className="text-sm font-medium mb-2">Alumnos en el grupo ({alumnosGrupo.length}):</h3>
-                          <ul className="space-y-1 max-h-40 overflow-y-auto">
-                            {alumnosGrupo.map((alumno) => (
-                              <li key={alumno.id} className="text-sm">
-                                • {alumno.nombre} {alumno.apellido}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <ul className="space-y-1 max-h-40 overflow-y-auto">
+                          {alumnosGrupo.map((alumno) => (
+                            <li key={alumno.id} className="text-sm">
+                              • {alumno.nombre} {alumno.apellido}
+                            </li>
+                          ))}
+                        </ul>
                       )}
                     </div>
                   )}

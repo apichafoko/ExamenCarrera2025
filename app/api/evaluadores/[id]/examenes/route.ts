@@ -3,59 +3,47 @@ import { executeQuery } from "@/lib/db"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const evaluadorId = Number.parseInt(params.id)
+    const evaluadorId = params.id
+    const searchParams = request.nextUrl.searchParams
+    const estado = searchParams.get("estado")
 
-    if (isNaN(evaluadorId)) {
-      return NextResponse.json({ error: "ID de evaluador inválido" }, { status: 400 })
+    console.log(`GET /api/evaluadores/${evaluadorId}/examenes${estado ? `?estado=${estado}` : ""}`)
+
+    // Construir la consulta SQL base
+    let query = `
+      SELECT 
+        ae.id,
+        ae.alumno_id,
+        ae.examen_id,
+        ae.numero_identificacion,
+        ae.estado,
+        e.fecha_aplicacion,
+        e.titulo as examen_titulo
+      FROM alumnos_examenes ae
+      JOIN examenes e ON ae.examen_id = e.id
+      WHERE ae.evaluador_id = $1
+    `
+
+    const queryParams = [evaluadorId]
+
+    // Agregar filtro de estado si se proporciona
+    if (estado && estado !== "todos") {
+      query += ` AND ae.estado = $2`
+      queryParams.push(estado)
     }
 
-    // Verificar si existe la tabla examenes_evaluadores
-    const tablaExiste = await executeQuery(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'examenes_evaluadores'
-      ) as existe;
-    `)
+    // Ordenar por fecha y estado
+    query += ` ORDER BY e.fecha_aplicacion DESC NULLS FIRST, ae.estado ASC`
 
-    const existeTablaExamenesEvaluadores = tablaExiste[0]?.existe || false
+    // Ejecutar la consulta
+    const result = await executeQuery(query, queryParams)
 
-    let examenes = []
-
-    if (existeTablaExamenesEvaluadores) {
-      // Obtener exámenes habilitados para este evaluador
-      const query = `
-        SELECT e.id, e.titulo, e.descripcion, e.fecha_aplicacion, e.estado
-        FROM examenes e
-        JOIN examenes_evaluadores ee ON e.id = ee.examen_id
-        WHERE ee.evaluador_id = $1
-        ORDER BY e.fecha_aplicacion DESC
-      `
-      examenes = await executeQuery(query, [evaluadorId])
-    }
-
-    return NextResponse.json(examenes)
+    return NextResponse.json(result)
   } catch (error) {
-    console.error(`Error al obtener exámenes del evaluador:`, error)
-    return NextResponse.json({ error: "Error al obtener exámenes del evaluador" }, { status: 500 })
-  }
-}
-
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const id = Number.parseInt(params.id, 10)
-    if (isNaN(id)) {
-      return errorResponse("ID inválido", 400)
-    }
-
-    const result = await evaluadoresService.delete(id)
-    if (!result) {
-      return errorResponse("Evaluador no encontrado", 404)
-    }
-
-    return successResponse({ message: "Evaluador eliminado" })
-  } catch (error) {
-    console.error("Error en DELETE /api/evaluadores/[id]:", error)
-    return errorResponse(error)
+    console.error(`Error en GET /api/evaluadores/${params.id}/examenes:`, error)
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Error al obtener los exámenes del evaluador" },
+      { status: 500 },
+    )
   }
 }

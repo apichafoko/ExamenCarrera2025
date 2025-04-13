@@ -3,7 +3,16 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookOpen, Users, ClipboardCheck, Building2, Award, ArrowRight } from "lucide-react"
+import {
+  BookOpen,
+  Users,
+  ClipboardCheck,
+  Building2,
+  Award,
+  ArrowRight,
+  FileSpreadsheet,
+  BadgeIcon as IdCard,
+} from "lucide-react"
 import { useAuth } from "@/context/auth-context"
 
 export default function Home() {
@@ -34,6 +43,18 @@ export default function Home() {
       title: "Evaluadores",
       description: "Gestiona el equipo de evaluadores y sus asignaciones.",
       href: "/evaluadores",
+    },
+    {
+      icon: <FileSpreadsheet className="h-12 w-12 text-primary" />,
+      title: "Asignación de Exámenes",
+      description: "Asigna exámenes a alumnos y gestiona las fechas de aplicación.",
+      href: "/asignar-examen",
+    },
+    {
+      icon: <IdCard className="h-12 w-12 text-primary" />,
+      title: "Asignación de Identificación",
+      description: "Asigna números de identificación a los alumnos para mantener el anonimato en las evaluaciones.",
+      href: "/asignacion-identificacion",
     },
   ]
 

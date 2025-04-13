@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { alumnosService, hospitalesService } from "@/lib/db-service"
 
 export default function NuevoAlumnoPage() {
   const router = useRouter()
@@ -29,7 +28,10 @@ export default function NuevoAlumnoPage() {
     const cargarHospitales = async () => {
       try {
         setIsDataLoading(true)
-        const hospitalesData = await hospitalesService.getAll()
+        const response = await fetch("/api/hospitales")
+        if (!response.ok) throw new Error("Error al cargar hospitales")
+
+        const hospitalesData = await response.json()
         setHospitales(hospitalesData)
       } catch (error) {
         console.error("Error cargando hospitales:", error)
@@ -59,15 +61,21 @@ export default function NuevoAlumnoPage() {
     setIsLoading(true)
 
     try {
-      // Crear el alumno en la base de datos
-      await alumnosService.create(alumno)
+      const response = await fetch("/api/alumnos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(alumno),
+      })
+
+      if (!response.ok) throw new Error("Error al crear el alumno")
 
       toast({
         title: "Alumno creado",
         description: "El alumno ha sido creado correctamente.",
       })
 
-      // Redirigir después de un breve retraso para mostrar el estado de carga
       setTimeout(() => {
         setIsLoading(false)
         router.push("/alumnos")
@@ -117,7 +125,7 @@ export default function NuevoAlumnoPage() {
               <Label htmlFor="nombre">Nombre</Label>
               <Input
                 id="nombre"
-                value={alumno.nombre || ""}
+                value={alumno.nombre}
                 onChange={(e) => setAlumno({ ...alumno, nombre: e.target.value })}
                 placeholder="Ej: Juan"
               />
@@ -126,7 +134,7 @@ export default function NuevoAlumnoPage() {
               <Label htmlFor="apellido">Apellido</Label>
               <Input
                 id="apellido"
-                value={alumno.apellido || ""}
+                value={alumno.apellido}
                 onChange={(e) => setAlumno({ ...alumno, apellido: e.target.value })}
                 placeholder="Ej: Pérez"
               />
@@ -136,7 +144,7 @@ export default function NuevoAlumnoPage() {
               <Input
                 id="email"
                 type="email"
-                value={alumno.email || ""}
+                value={alumno.email}
                 onChange={(e) => setAlumno({ ...alumno, email: e.target.value })}
                 placeholder="Ej: juan.perez@ejemplo.com"
               />
@@ -145,7 +153,7 @@ export default function NuevoAlumnoPage() {
               <Label htmlFor="telefono">Teléfono</Label>
               <Input
                 id="telefono"
-                value={alumno.telefono || ""}
+                value={alumno.telefono}
                 onChange={(e) => setAlumno({ ...alumno, telefono: e.target.value })}
                 placeholder="Ej: +54 11 1234-5678"
               />
@@ -153,7 +161,7 @@ export default function NuevoAlumnoPage() {
             <div className="space-y-2">
               <Label htmlFor="hospital">Hospital</Label>
               <Select
-                value={alumno.hospital_id || ""}
+                value={alumno.hospital_id?.toString() || ""}
                 onValueChange={(value) => setAlumno({ ...alumno, hospital_id: Number.parseInt(value) })}
               >
                 <SelectTrigger id="hospital">
