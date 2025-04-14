@@ -47,7 +47,7 @@ export function MainNav() {
     return null
   }
 
-  // Rutas para administradores y colaboradores
+  // Rutas para administradores
   const adminRoutes = [
     {
       href: "/",
@@ -99,6 +99,22 @@ export function MainNav() {
     },
   ]
 
+  // Rutas para colaboradores
+  const colaboradorRoutes = [
+    {
+      href: "/",
+      label: "Inicio",
+      icon: <Home className="h-5 w-5 mr-2" />,
+      active: pathname === "/",
+    },
+    {
+      href: "/asignacion-identificacion",
+      label: "Asignar Identificación",
+      icon: <IdCard className="h-5 w-5 mr-2" />,
+      active: pathname === "/asignacion-identificacion" || pathname.startsWith("/asignacion-identificacion/"),
+    },
+  ]
+
   // Rutas para evaluadores
   const evaluadorRoutes = [
     {
@@ -113,10 +129,16 @@ export function MainNav() {
       icon: <ClipboardCheck className="h-5 w-5 mr-2" />,
       active: pathname === "/tomar-examen" || pathname.startsWith("/tomar-examen/"),
     },
+    {
+      href: "/examenes-completados",
+      label: "Exámenes Completados",
+      icon: <ClipboardCheck className="h-5 w-5 mr-2" />,
+      active: pathname === "/examenes-completados",
+    },
   ]
 
   // Seleccionar las rutas según el rol
-  const routes = isAdmin || isColaborador ? adminRoutes : evaluadorRoutes
+  const routes = isAdmin ? adminRoutes : isColaborador ? colaboradorRoutes : evaluadorRoutes
 
   return (
     <nav className="bg-white shadow-md dark:bg-gray-900">

@@ -61,7 +61,8 @@
     "@neondatabase/serverless": "latest",
     "@jest/globals": "latest",
     "bcryptjs": "latest",
-    "@vercel/postgres": "latest"
+    "@vercel/postgres": "latest",
+    "jose": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

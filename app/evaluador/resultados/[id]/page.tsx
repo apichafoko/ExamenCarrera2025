@@ -138,18 +138,18 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
                 <p className="text-lg font-medium">{evaluacion.alumnoNombre || "No especificado"}</p>
                 <h3 className="font-medium text-muted-foreground">Tiempo Total:</h3>
                 {evaluacion.fecha_inicio && evaluacion.fecha_fin && (
-                <p className="text-lg font-medium">
-                  {" "}
-                  {(() => {
-                    const inicio = new Date(evaluacion.fecha_inicio)
-                    const fin = new Date(evaluacion.fecha_fin)
-                    const diffMs = fin.getTime() - inicio.getTime()
-                    const minutos = Math.floor(diffMs / 60000)
-                    const segundos = Math.floor((diffMs % 60000) / 1000)
+                  <p className="text-lg font-medium">
+                    {(() => {
+                      const inicio = new Date(evaluacion.fecha_inicio)
+                      const fin = new Date(evaluacion.fecha_fin)
+                      const diffMs = fin.getTime() - inicio.getTime()
+                      const minutos = Math.floor(diffMs / 60000)
+                      const segundos = Math.floor((diffMs % 60000) / 1000)
 
-                    return `${minutos} min ${segundos} seg`
-                  })()}
-                </p>
+                      return `${minutos} min ${segundos} seg`
+                    })()}
+                  </p>
+                )}
               </div>
               <div>
                 <h3 className="font-medium text-muted-foreground">Fecha de Inicio</h3>
@@ -219,6 +219,7 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
       </div>
 
       <Tabs defaultValue="resultados" className="mt-6">
+        (
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="resultados" className="text-sm">
             <FileText className="h-4 w-4 mr-2" />
@@ -229,8 +230,9 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
             Detalle de Respuestas
           </TabsTrigger>
         </TabsList>
-
+        ){" "}
         <TabsContent value="resultados">
+          (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -270,8 +272,8 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
               )}
             </CardContent>
           </Card>
+          )
         </TabsContent>
-
         <TabsContent value="respuestas">
           <Card>
             <CardHeader>
@@ -279,34 +281,33 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
               <CardDescription>Revisión detallada de cada respuesta del alumno</CardDescription>
             </CardHeader>
             <CardContent>
-              {evaluacion.preguntas && evaluacion.preguntas.length > 0 ? (
-                <div className="space-y-8">
-                  {evaluacion.preguntas.map((pregunta: any, index: number) => (
-                    <div key={pregunta.id || index} className="space-y-4">
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-medium">
-                          Pregunta {index + 1}: {pregunta.texto}
-                        </h3>
-                        <p className="text-muted-foreground text-sm">
-                          {pregunta.estacion_nombre || "Estación no especificada"}
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="font-medium">Respuesta del alumno:</p>
-                        <div className="bg-muted p-3 rounded-md">{pregunta.respuesta_texto || "Sin respuesta"}</div>
-                      </div>
-
-                      <div className="max-w-xs">
-                        <p className="font-medium">Comentarios:</p>
-                        <p className="text-sm text-muted-foreground">{pregunta.comentarios || "Sin comentarios"}</p>
-                      </div>
+              evaluacion.preguntas && evaluacion.preguntas.length > 0 ? (
+              <div className="space-y-8">
+                {evaluacion.preguntas.map((pregunta: any, index: number) => (
+                  <div key={pregunta.id || index} className="space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-medium">
+                        Pregunta {index + 1}: {pregunta.texto}
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        {pregunta.estacion_nombre || "Estación no especificada"}
+                      </p>
                     </div>
-                  ))}
-                </div>
+
+                    <div className="space-y-2">
+                      <p className="font-medium">Respuesta del alumno:</p>
+                      <div className="bg-muted p-3 rounded-md">{pregunta.respuesta_texto || "Sin respuesta"}</div>
+                    </div>
+
+                    <div className="max-w-xs">
+                      <p className="font-medium">Comentarios:</p>
+                      <p className="text-sm text-muted-foreground">{pregunta.comentarios || "Sin comentarios"}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
               ) : (
-                <div className="text-center text-muted-foreground py-8">No hay información de preguntas disponible</div>
-              )}
+              <div className="text-center text-muted-foreground py-8">No hay información de preguntas disponible</div>)
             </CardContent>
           </Card>
         </TabsContent>

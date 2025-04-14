@@ -288,7 +288,7 @@ export default function TomarExamenPage() {
                   .filter((examen) =>
                     filtroId
                       ? examen.numero_identificacion && examen.numero_identificacion.toString().includes(filtroId)
-                      : true
+                      : true,
                   )
                   .map((examen) => (
                     <TableRow key={examen.id}>

@@ -16,7 +16,7 @@ import {
 import { useAuth } from "@/context/auth-context"
 
 export default function Home() {
-  const { isAdmin, isEvaluador, user } = useAuth()
+  const { isAdmin, isEvaluador, isColaborador, user } = useAuth()
 
   // Características para administradores
   const adminFeatures = [
@@ -66,10 +66,26 @@ export default function Home() {
       description: "Evalúa a los alumnos de manera anónima y objetiva.",
       href: "/tomar-examen",
     },
+    {
+      icon: <ClipboardCheck className="h-12 w-12 text-primary" />,
+      title: "Examenes Completados",
+      description: "Controla los resultados de los examenes completados.",
+      href: "/examenes-completados",
+    },
+  ]
+
+  // Características para colaboradores
+  const colaboradorFeatures = [
+    {
+      icon: <Users className="h-12 w-12 text-primary" />,
+      title: "Asignar Identificación",
+      description: "Asigná números de identificación a los alumnos para que puedan ser evaluados correctamente.",
+      href: "/asignacion-identificacion",
+    },
   ]
 
   // Seleccionar las características según el rol
-  const features = isAdmin ? adminFeatures : evaluadorFeatures
+  const features = isAdmin ? adminFeatures : isColaborador ? colaboradorFeatures : evaluadorFeatures
 
   return (
     <div className="space-y-10 pb-10">
@@ -83,19 +99,26 @@ export default function Home() {
               <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
                 {isAdmin
                   ? "Gestiona exámenes, alumnos y evaluaciones de manera eficiente y moderna."
-                  : `Bienvenido, ${user?.nombre}. Accede a los exámenes asignados para evaluación.`}
+                  : isColaborador
+                    ? "Asigna identificaciones a los alumnos y colabora con la organización de los exámenes."
+                    : `Bienvenido, ${user?.nombre}. Accede a los exámenes asignados para evaluación.`}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               {isAdmin ? (
-                <>
-                  <Button asChild size="lg">
-                    <Link href="/examenes">
-                      Gestionar Exámenes
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </>
+                <Button asChild size="lg">
+                  <Link href="/examenes">
+                    Gestionar Exámenes
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : isColaborador ? (
+                <Button asChild size="lg">
+                  <Link href="/asignacion-identificacion">
+                    Asignar Identificación
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
               ) : (
                 <Button asChild size="lg">
                   <Link href="/tomar-examen">

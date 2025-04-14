@@ -120,10 +120,31 @@ export function MainNavWithDashboard() {
       icon: <ClipboardCheck className="h-5 w-5 mr-2" />,
       active: pathname === "/tomar-examen" || pathname.startsWith("/tomar-examen/"),
     },
+    {
+      href: "/examenes-completados",
+      label: "Exámenes Completados",
+      icon: <ClipboardCheck className="h-5 w-5 mr-2" />,
+      active: pathname === "/examenes-completados",
+    },
   ]
 
+  // Rutas para colaboradores
+  const colaboradorRoutes = [
+    {
+      href: "/",
+      label: "Inicio",
+      icon: <Home className="h-5 w-5 mr-2" />,
+      active: pathname === "/",
+    },
+    {
+      href: "/asignacion-identificacion",
+      label: "Asignar Identificación",
+      icon: <IdCard className="h-5 w-5 mr-2" />,
+      active: pathname === "/asignacion-identificacion" || pathname.startsWith("/asignacion-identificacion/"),
+    },
+  ]
   // Seleccionar las rutas según el rol
-  const routes = isAdmin ? adminRoutes : evaluadorRoutes
+  const routes = isAdmin ? adminRoutes : isColaborador ? colaboradorRoutes : evaluadorRoutes
 
   return (
     <nav className="bg-white shadow-md dark:bg-gray-900">

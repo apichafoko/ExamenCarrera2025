@@ -1,26 +1,17 @@
 import { executeQuery } from "./db"
 import * as bcrypt from "bcryptjs"
+import { SignJWT, jwtVerify } from "jose"
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || "secret"
 
 export async function validateJWT(token: string): Promise<any> {
-  // Placeholder implementation - replace with actual JWT validation logic
-  // This function should verify the token and return the user data if valid, or null if invalid
-  // For now, it just returns a dummy user object
-  if (!token) {
-    return null
-  }
-
   try {
-    // Simulate JWT verification
-    const decoded = {
-      id: 1,
-      nombre: "Admin",
-      email: "admin@example.com",
-      role: "admin",
-    }
+    const secret = new TextEncoder().encode(JWT_SECRET_KEY)
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ["HS256"],
+    })
 
-    return decoded
+    return payload
   } catch (error) {
     console.error("JWT verification error:", error)
     return null
@@ -81,5 +72,23 @@ export async function verificarCredenciales(email: string, password: string): Pr
   } catch (error) {
     console.error("Error al verificar credenciales:", error)
     return null
+  }
+}
+
+export async function signJWT(payload: any, options?: { exp: string }) {
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET_KEY)
+    const alg = "HS256"
+
+    const jwt = await new SignJWT(payload)
+      .setProtectedHeader({ alg })
+      .setIssuedAt()
+      .setExpirationTime(options?.exp || "24h")
+      .sign(secret)
+
+    return jwt
+  } catch (error) {
+    console.error("Error signing JWT:", error)
+    throw error
   }
 }
