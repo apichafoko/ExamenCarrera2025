@@ -6,7 +6,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BookOpen, Loader2 } from "lucide-react"
@@ -28,7 +28,6 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError("")
-    //const welcomeMessage = process.env.MENSAJE_TEXT;
 
     try {
       const success = await login(formData.email, formData.password)
@@ -67,17 +66,17 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl">Sistema de Evaluación Académica</CardTitle>
           <div className="flex justify-center mb-4 items-center gap-4">
-            <BookOpen className="h-12 w-12 text-primary" />
+            <BookOpen className="h-8 w-8 text-primary" />
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-E6cObsYKXSKMv2Y2PidoSHrcoylfWw.png"
               alt="Logo AAARBA"
-              width={180}
-              height={60}
+              width={120}
+              height={40}
               className="h-12 w-auto"
             />
           </div>
-          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>Ingresa tus credenciales para acceder al sistema de evaluación académica</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>

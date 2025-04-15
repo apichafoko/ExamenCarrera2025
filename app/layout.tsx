@@ -13,7 +13,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ExamenCarrera - Sistema de Evaluación Académica",
+  title: "Sistema de Evaluación Académica",
   description: "Sistema para la gestión y evaluación de exámenes académicos",
   generator: "Uriel Fraidenraij",
 }
@@ -44,7 +44,7 @@ export default function RootLayout({
                         />
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        © {new Date().getFullYear()} ExamenCarrera - Sistema de Evaluación Académica - Desarrollado por
+                        © {new Date().getFullYear()} - Sistema de Evaluación Académica - Desarrollado por
                         Uriel Fraidenraij
                       </div>
                     </div>

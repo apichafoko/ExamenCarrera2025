@@ -211,8 +211,8 @@ export default function TomarExamenPage() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-2xl">Exámenes Asignados</CardTitle>
-              <CardDescription>Gestiona los exámenes asignados para evaluación</CardDescription>
+              <CardTitle className="text-2xl">Estaciones Asignadas</CardTitle>
+              <CardDescription>Gestiona las estaciones asignadas para evaluación</CardDescription>
             </div>
             <div className="flex gap-2">
               <div className="relative">
@@ -277,7 +277,7 @@ export default function TomarExamenPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Alumno</TableHead>
-                  <TableHead>Examen</TableHead>
+                  <TableHead>Estación</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>

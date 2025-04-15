@@ -42,13 +42,13 @@ export default function NuevoExamenPage() {
         body: JSON.stringify(examen),
       })
 
-      if (!response.ok) throw new Error("Error al crear el examen")
+      if (!response.ok) throw new Error("Error al crear la estación")
 
       const nuevoExamen = await response.json()
 
       toast({
         title: "Examen creado",
-        description: "El examen ha sido creado correctamente. Ahora puedes agregar estaciones y preguntas.",
+        description: "La estación ha sido creada correctamente. Ahora puedes agregar casos y preguntas.",
       })
 
       setTimeout(() => {
@@ -60,11 +60,11 @@ export default function NuevoExamenPage() {
         }
       }, 800)
     } catch (error) {
-      console.error("Error al crear el examen:", error)
+      console.error("Error al crear la estación:", error)
       setIsLoading(false)
       toast({
         title: "Error",
-        description: "Ocurrió un error al crear el examen.",
+        description: "Ocurrió un error al crear la estación.",
         variant: "destructive",
       })
     }
@@ -78,21 +78,21 @@ export default function NuevoExamenPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Nuevo Examen</h1>
-            <p className="text-muted-foreground">Crea un nuevo examen en el sistema.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Nueva Estación</h1>
+            <p className="text-muted-foreground">Crea una nueva estación en el sistema.</p>
           </div>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Información del Examen</CardTitle>
-          <CardDescription>Completa los campos para crear un nuevo examen.</CardDescription>
+          <CardTitle>Información de la Estación</CardTitle>
+          <CardDescription>Completa los campos para crear una nueva estación.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="titulo">Título del Examen</Label>
+              <Label htmlFor="titulo">Título de la estación</Label>
               <Input
                 id="titulo"
                 value={examen.titulo || ""}
@@ -123,7 +123,7 @@ export default function NuevoExamenPage() {
         <CardFooter className="flex justify-end">
           <Button onClick={handleGuardar} disabled={isLoading}>
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Crear Examen
+            Crear estación
           </Button>
         </CardFooter>
       </Card>

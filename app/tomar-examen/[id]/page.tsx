@@ -1053,26 +1053,102 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
                       <p className="text-sm text-gray-500 mt-1">{estacion.descripcion}</p>
                     </div>
 
-                    {estacion.preguntas && estacion.preguntas.length > 0 ? (
-                      <div className="space-y-8">
-                        {estacion.preguntas.map((pregunta: any, pregIndex: number) => (
-                          <div key={pregunta.id} className="bg-gray-50 p-6 rounded-lg shadow-sm">
-                            <h4 className="font-medium mb-4 text-lg flex items-center">
-                              <span className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">
-                                {pregIndex + 1}
-                              </span>
-                              {pregunta.texto}
-                              {preguntasSinResponder.includes(pregunta.id) && (
-                                <span className="ml-2 text-red-500 text-sm font-normal">* Obligatoria</span>
-                              )}
-                            </h4>
-                            <div className="mt-4">{renderOpcionesPregunta(pregunta)}</div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p>No hay preguntas en esta estación.</p>
-                    )}
+{estacion.preguntas && estacion.preguntas.length > 0 ? (
+  <div className="space-y-8">
+    {/* Verificar si todas las preguntas son de tipo "opcion_unica" */}
+    {estacion.preguntas.every((pregunta: any) => pregunta.tipo === "opcion_unica") ? (
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse border border-gray-200">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-gray-200 px-4 py-2 text-left text-sm font-medium">Ítem Evaluado</th>
+              <th className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">Sí</th>
+              <th className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">Parcial</th>
+              <th className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">No</th>
+            </tr>
+          </thead>
+          <tbody>
+            {estacion.preguntas.map((pregunta: any, pregIndex: number) => {
+              const respuestaActual = respuestas[pregunta.id] || "";
+              const esPreguntaSinResponder = preguntasSinResponder.includes(pregunta.id);
+              const rowClass = esPreguntaSinResponder ? "border-2 border-red-500" : "";
+              
+              // Determinar si la pregunta tiene solo dos opciones (SÍ y NO)
+              const opciones = pregunta.opciones?.map((op: any) => op.texto.toLowerCase()) || [];
+              const esPreguntaSiNo = opciones.length === 2 && opciones.includes("si") && opciones.includes("no");
+
+              // Función para manejar el Cambio de opción, asegurando exclusividad
+              const handleOpcionChange = (opcion: string) => {
+                if (respuestaActual === opcion) {
+                  // Si la opción ya está seleccionada, desmarcarla
+                  handleRespuestaChange(pregunta.id, "");
+                } else {
+                  // Seleccionar la nueva opción
+                  handleRespuestaChange(pregunta.id, opcion);
+                }
+              };
+
+              return (
+                <tr key={pregunta.id} className={rowClass}>
+                  <td className="border border-gray-200 px-4 py-2 text-sm">
+                    <span className="font-medium mr-2">{pregIndex + 1}.</span>
+                    {pregunta.texto}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-2 text-center">
+                    <Switch
+                      checked={respuestaActual === "si"}
+                      onCheckedChange={() => handleOpcionChange("si")}
+                      disabled={examen.estado === "Completado"}
+                      className="scale-125 data-[state=checked]:bg-primary"
+                    />
+                  </td>
+                  <td className="border border-gray-200 px-4 py-2 text-center">
+                    <Switch
+                      checked={respuestaActual === "parcialmente"}
+                      onCheckedChange={() => handleOpcionChange("parcialmente")}
+                      disabled={examen.estado === "Completado" || esPreguntaSiNo} // Deshabilitar si es pregunta SÍ/NO
+                      className={`scale-125 ${
+                        esPreguntaSiNo ? "opacity-50 cursor-not-allowed" : "data-[state=checked]:bg-primary"
+                      }`}
+                    />
+                  </td>
+                  <td className="border border-gray-200 px-4 py-2 text-center">
+                    <Switch
+                      checked={respuestaActual === "no"}
+                      onCheckedChange={() => handleOpcionChange("no")}
+                      disabled={examen.estado === "Completado"}
+                      className="scale-125 data-[state=checked]:bg-primary"
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      /* Renderizado original para otros tipos de preguntas */
+      <div className="space-y-8">
+        {estacion.preguntas.map((pregunta: any, pregIndex: number) => (
+          <div key={pregunta.id} className="bg-gray-50 p-6 rounded-lg shadow-sm">
+            <h4 className="font-medium mb-4 text-lg flex items-center">
+              <span className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">
+                {pregIndex + 1}
+              </span>
+              {pregunta.texto}
+              {preguntasSinResponder.includes(pregunta.id) && (
+                <span className="ml-2 text-red-500 text-sm font-normal">* Obligatoria</span>
+              )}
+            </h4>
+            <div className="mt-4">{renderOpcionesPregunta(pregunta)}</div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+) : (
+  <p>No hay preguntas en esta estación.</p>
+)}
 
                     <div className="mt-6 border-t pt-4">
                       <h4 className="font-medium mb-2">Observaciones (opcional)</h4>

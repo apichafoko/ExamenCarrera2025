@@ -25,7 +25,7 @@ export default function ExamenesPage() {
       setIsLoading(true)
       setError(null)
 
-      console.log("Cargando exámenes...")
+      console.log("Cargando Estaciones...")
       const response = await fetch("/api/examenes", {
         method: "GET",
         headers: {
@@ -112,14 +112,14 @@ export default function ExamenesPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Exámenes</h1>
+        <h1 className="text-3xl font-bold">Estaciones</h1>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={cargarExamenes} disabled={isLoading}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             {isLoading ? "Actualizando..." : "Actualizar"}
           </Button>
           <Button onClick={() => router.push("/examenes/nuevo")}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Nuevo Examen
+            <PlusCircle className="mr-2 h-4 w-4" /> Nueva Estación
           </Button>
         </div>
       </div>
@@ -189,7 +189,7 @@ export default function ExamenesPage() {
                 </div>
               ) : filteredExamenes.length === 0 ? (
                 <div className="text-center py-10">
-                  No se encontraron exámenes que coincidan con los criterios de búsqueda.
+                  No se encontraron estaciones que coincidan con los criterios de búsqueda.
                 </div>
               ) : (
                 filteredExamenes.map((examen) => (
@@ -225,11 +225,11 @@ export default function ExamenesPage() {
             </TabsContent>
             <TabsContent value="recientes" className="space-y-4">
               {/* Contenido similar para exámenes recientes */}
-              <div className="text-center py-10">Filtro de exámenes recientes en desarrollo.</div>
+              <div className="text-center py-10">Filtro de Estaciones recientes en desarrollo.</div>
             </TabsContent>
             <TabsContent value="proximos" className="space-y-4">
               {/* Contenido similar para próximos exámenes */}
-              <div className="text-center py-10">Filtro de próximos exámenes en desarrollo.</div>
+              <div className="text-center py-10">Filtro de próximos Estaciones en desarrollo.</div>
             </TabsContent>
           </Tabs>
         </div>
