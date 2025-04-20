@@ -162,9 +162,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                 <Calendar className="mr-2 h-5 w-5" />
                 Casos del Examen
               </CardTitle>
-              <CardDescription>
-                {examen.estaciones?.length || 0} casos configurados para este examen
-              </CardDescription>
+              <CardDescription>{examen.estaciones?.length || 0} casos configurados para este examen</CardDescription>
             </CardHeader>
             <CardContent>
               {examen.estaciones && examen.estaciones.length > 0 ? (

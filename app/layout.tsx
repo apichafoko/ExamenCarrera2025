@@ -44,8 +44,8 @@ export default function RootLayout({
                         />
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        © {new Date().getFullYear()} - Sistema de Evaluación Académica - Desarrollado por
-                        Uriel Fraidenraij
+                        © {new Date().getFullYear()} - Sistema de Evaluación Académica - Desarrollado por Uriel
+                        Fraidenraij
                       </div>
                     </div>
                   </footer>

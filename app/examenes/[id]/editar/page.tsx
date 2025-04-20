@@ -592,13 +592,13 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
     })
 
     try {
-      const examenActualizado = prepararDatosParaGuardar();
+      const examenActualizado = prepararDatosParaGuardar()
 
       if (!examenActualizado) {
-        throw new Error("Error al preparar los datos del examen");
+        throw new Error("Error al preparar los datos del examen")
       }
 
-      console.log("Datos a enviar:", JSON.stringify(examenActualizado, null, 2));
+      console.log("Datos a enviar:", JSON.stringify(examenActualizado, null, 2))
 
       // Hacer la solicitud PUT al endpoint /api/examenes/[id]
       const response = await fetch(`/api/examenes/${examen.id}`, {
@@ -607,30 +607,30 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
           "Content-Type": "application/json",
         },
         body: JSON.stringify(examenActualizado),
-      });
+      })
 
       // Verificar si la solicitud fue exitosa
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "No se pudo actualizar el examen");
+        const errorData = await response.json()
+        throw new Error(errorData.message || "No se pudo actualizar el examen")
       }
 
-      const resultado = await response.json();
+      const resultado = await response.json()
 
       toast({
         title: "Cambios guardados",
         description: "Los datos del examen han sido actualizados correctamente.",
-      });
+      })
 
-      router.push(`/examenes/${id}`);
+      router.push(`/examenes/${id}`)
     } catch (error) {
-      console.error("Error al guardar el examen:", error);
-      setIsLoading(false);
+      console.error("Error al guardar el examen:", error)
+      setIsLoading(false)
       toast({
         title: "Error",
         description: "Ocurrió un error al guardar los cambios. Por favor, intenta nuevamente.",
         variant: "destructive",
-      });
+      })
     }
   }
 
@@ -1344,8 +1344,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
               {examen.estaciones && examen.estaciones.some((estacion: any) => !estacion.activo) && (
                 <div className="mt-4 p-4 bg-gray-100 rounded-md">
                   <p className="text-sm text-gray-500 font-medium">
-                    Nota: Los casos inactivos no se muestran en la vista previa y no aparecerán durante la
-                    evaluación.
+                    Nota: Los casos inactivos no se muestran en la vista previa y no aparecerán durante la evaluación.
                   </p>
                 </div>
               )}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
-import { sql } from "@vercel/postgres"
+import { executeQuery } from "@/lib/db"
 
+// GET: Retrieve a group by ID with its students
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = Number.parseInt(params.id)
@@ -8,34 +9,36 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: "ID inválido" }, { status: 400 })
     }
 
-    // Consulta directa a la base de datos usando @vercel/postgres
-    const grupoResult = await sql`
+    // Query the group and count of students
+    const grupoQuery = `
       SELECT g.*, 
              COUNT(ga.alumno_id) AS total_alumnos
       FROM grupos g
       LEFT JOIN alumnos_grupos ga ON g.id = ga.grupo_id
-      WHERE g.id = ${id}
+      WHERE g.id = $1
       GROUP BY g.id
     `
+    const grupoResult = await executeQuery(grupoQuery, [id])
 
-    if (grupoResult.rows.length === 0) {
+    if (grupoResult.length === 0) {
       return NextResponse.json({ message: "Grupo no encontrado" }, { status: 404 })
     }
 
-    const grupo = grupoResult.rows[0]
+    const grupo = grupoResult[0]
 
-    // Obtener los alumnos del grupo
-    const alumnosResult = await sql`
+    // Query students in the group
+    const alumnosQuery = `
       SELECT a.*, h.nombre as hospital_nombre
       FROM alumnos a
       LEFT JOIN hospitales h ON a.hospital_id = h.id
       JOIN alumnos_grupos ga ON a.id = ga.alumno_id
-      WHERE ga.grupo_id = ${id}
+      WHERE ga.grupo_id = $1
       ORDER BY a.apellido, a.nombre
     `
+    const alumnosResult = await executeQuery(alumnosQuery, [id])
 
-    // Añadir los alumnos al objeto grupo
-    grupo.alumnos = alumnosResult.rows || []
+    // Add students to the group object
+    grupo.alumnos = alumnosResult || []
 
     return NextResponse.json(grupo, { status: 200 })
   } catch (error) {
@@ -47,6 +50,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
+// PUT: Update a group by ID
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = Number.parseInt(params.id)
@@ -56,21 +60,27 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     const data = await request.json()
 
-    // Actualizar el grupo en la base de datos
-    const result = await sql`
+    // Update the group
+    const updateQuery = `
       UPDATE grupos
-      SET nombre = ${data.nombre}, 
-          descripcion = ${data.descripcion || null},
-          activo = ${data.activo}
-      WHERE id = ${id}
+      SET nombre = $1, 
+          descripcion = $2,
+          activo = $3
+      WHERE id = $4
       RETURNING *
     `
+    const result = await executeQuery(updateQuery, [
+      data.nombre,
+      data.descripcion || null,
+      data.activo,
+      id,
+    ])
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return NextResponse.json({ message: "Grupo no encontrado" }, { status: 404 })
     }
 
-    return NextResponse.json(result.rows[0], { status: 200 })
+    return NextResponse.json(result[0], { status: 200 })
   } catch (error) {
     console.error("Error en PUT /api/grupos/[id]:", error)
     return NextResponse.json(
@@ -80,6 +90,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
+// DELETE: Delete a group by ID
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = Number.parseInt(params.id)
@@ -87,14 +98,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ message: "ID inválido" }, { status: 400 })
     }
 
-    // Verificar si el grupo tiene alumnos
-    const checkResult = await sql`
+    // Check if the group has assigned students
+    const checkQuery = `
       SELECT COUNT(*) as count
       FROM alumnos_grupos
-      WHERE grupo_id = ${id}
+      WHERE grupo_id = $1
     `
+    const checkResult = await executeQuery(checkQuery, [id])
 
-    const count = Number.parseInt(checkResult.rows[0].count)
+    const count = Number.parseInt(checkResult[0].count)
 
     if (count > 0) {
       return NextResponse.json(
@@ -103,14 +115,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       )
     }
 
-    // Eliminar el grupo
-    const result = await sql`
+    // Delete the group
+    const deleteQuery = `
       DELETE FROM grupos
-      WHERE id = ${id}
+      WHERE id = $1
       RETURNING id
     `
+    const result = await executeQuery(deleteQuery, [id])
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return NextResponse.json({ message: "Grupo no encontrado" }, { status: 404 })
     }
 
