@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { PlusCircle, Search, Calendar, Users, RefreshCw, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export default function ExamenesPage() {
   const [examenes, setExamenes] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -25,7 +28,7 @@ export default function ExamenesPage() {
       setIsLoading(true)
       setError(null)
 
-      console.log("Cargando Estaciones...")
+      logger.log("Cargando Estaciones...")
       const response = await fetch("/api/examenes", {
         method: "GET",
         headers: {
@@ -41,17 +44,17 @@ export default function ExamenesPage() {
       }
 
       const data = await response.json()
-      console.log("Datos recibidos:", data)
+      logger.log("Datos recibidos:", data)
 
       if (Array.isArray(data)) {
         setExamenes(data)
       } else {
-        console.error("Los datos recibidos no son un array:", data)
+        logger.error("Los datos recibidos no son un array:", data)
         setExamenes([])
         setError("Los datos recibidos no tienen el formato esperado")
       }
     } catch (error) {
-      console.error("Error cargando exámenes:", error)
+      logger.error("Error cargando exámenes:", error)
       setError(error instanceof Error ? error.message : "Error desconocido al cargar exámenes")
       setExamenes([])
     } finally {

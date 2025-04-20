@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
+import logger from "@/lib/logger"
 
 export function HospitalFormClient() {
   const router = useRouter()
@@ -68,7 +69,7 @@ export function HospitalFormClient() {
       router.push("/hospitales")
       router.refresh()
     } catch (error) {
-      console.error("Error al crear hospital:", error)
+      logger.error("Error al crear hospital:", error)
       toast({
         variant: "destructive",
         title: "Error",

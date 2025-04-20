@@ -8,6 +8,9 @@ import { Loader2, RefreshCw, UserCheck } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import SyncManager from "@/components/sync-manager"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export default function SyncPage() {
   const { toast } = useToast()
   const [isSyncingUsers, setIsSyncingUsers] = useState(false)
@@ -29,7 +32,7 @@ export default function SyncPage() {
         description: data.message || "Usuarios sincronizados correctamente",
       })
     } catch (error) {
-      console.error("Error:", error)
+      logger.error("Error:", error)
       toast({
         title: "Error",
         description: "No se pudieron sincronizar los usuarios",

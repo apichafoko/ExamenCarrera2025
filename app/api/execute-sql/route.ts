@@ -1,5 +1,7 @@
+// Importar el logger
 import { NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
+import logger from "@/lib/logger"
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
     const sql = neon(databaseUrl)
 
     // Ejecutar la consulta
-    console.log("Ejecutando consulta SQL:", query)
+    logger.log("Ejecutando consulta SQL:", query)
     const result = await sql.query(query)
 
     return NextResponse.json({
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
       rowCount: result.rowCount,
     })
   } catch (error) {
-    console.error("Error ejecutando consulta SQL:", error)
+    logger.error("Error ejecutando consulta SQL:", error)
 
     return NextResponse.json(
       {

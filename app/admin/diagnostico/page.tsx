@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CheckCircle, XCircle, AlertTriangle, Database, RefreshCw } from "lucide-react"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export default function DiagnosticoDB() {
   const [diagnostico, setDiagnostico] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -33,7 +36,7 @@ export default function DiagnosticoDB() {
       setDiagnostico(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido")
-      console.error("Error obteniendo diagnóstico:", err)
+      logger.error("Error obteniendo diagnóstico:", err)
     } finally {
       setLoading(false)
     }
@@ -58,7 +61,7 @@ export default function DiagnosticoDB() {
       await obtenerDiagnostico()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido")
-      console.error("Error creando tablas:", err)
+      logger.error("Error creando tablas:", err)
     } finally {
       setCreandoTablas(false)
     }

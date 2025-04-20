@@ -5,6 +5,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react"
 
+// No hay console.log o console.error en este archivo, pero lo incluimos para futura referencia
+
 export function DatabaseConnectionStatus() {
   const [status, setStatus] = useState<"loading" | "connected" | "error">("loading")
   const [message, setMessage] = useState<string>("Verificando conexión a la base de datos...")

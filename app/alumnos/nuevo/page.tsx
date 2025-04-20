@@ -10,6 +10,9 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export default function NuevoAlumnoPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -34,7 +37,7 @@ export default function NuevoAlumnoPage() {
         const hospitalesData = await response.json()
         setHospitales(hospitalesData)
       } catch (error) {
-        console.error("Error cargando hospitales:", error)
+        logger.error("Error cargando hospitales:", error)
         toast({
           title: "Error",
           description: "Ocurrió un error al cargar los hospitales.",
@@ -81,7 +84,7 @@ export default function NuevoAlumnoPage() {
         router.push("/alumnos")
       }, 800)
     } catch (error) {
-      console.error("Error al crear el alumno:", error)
+      logger.error("Error al crear el alumno:", error)
       setIsLoading(false)
       toast({
         title: "Error",

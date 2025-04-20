@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import logger from "@/lib/logger"
 
 export async function GET() {
   try {
-    console.log("Iniciando verificación y creación de tablas...")
+    logger.log("Iniciando verificación y creación de tablas...")
 
     // Verificar si las tablas existen y crearlas si no
     const tablas = [
@@ -145,11 +146,11 @@ export async function GET() {
     const resultados = []
     for (const tabla of tablas) {
       try {
-        console.log(`Verificando/creando tabla: ${tabla.nombre}`)
+        logger.log(`Verificando/creando tabla: ${tabla.nombre}`)
         await sql.query(tabla.query)
         resultados.push({ tabla: tabla.nombre, estado: "OK" })
       } catch (error) {
-        console.error(`Error creando tabla ${tabla.nombre}:`, error)
+        logger.error(`Error creando tabla ${tabla.nombre}:`, error)
         resultados.push({
           tabla: tabla.nombre,
           estado: "ERROR",
@@ -279,7 +280,7 @@ export async function GET() {
       datosEjemplo,
     })
   } catch (error) {
-    console.error("Error en la inicialización de la base de datos:", error)
+    logger.error("Error en la inicialización de la base de datos:", error)
     return NextResponse.json(
       {
         mensaje: "Error en la inicialización de la base de datos",

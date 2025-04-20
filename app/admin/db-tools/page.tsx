@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, AlertCircle, CheckCircle, Database, RefreshCw, Play } from "lucide-react"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export default function DbToolsPage() {
   const [connectionStatus, setConnectionStatus] = useState<any>(null)
   const [initStatus, setInitStatus] = useState<any>(null)
@@ -37,7 +40,7 @@ export default function DbToolsPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido")
-      console.error("Error probando conexión:", err)
+      logger.error("Error probando conexión:", err)
     } finally {
       setLoading(false)
     }
@@ -64,7 +67,7 @@ export default function DbToolsPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido")
-      console.error("Error inicializando DB:", err)
+      logger.error("Error inicializando DB:", err)
     } finally {
       setInitLoading(false)
     }
@@ -99,7 +102,7 @@ export default function DbToolsPage() {
       }
     } catch (err) {
       setQueryError(err instanceof Error ? err.message : "Error desconocido")
-      console.error("Error ejecutando consulta:", err)
+      logger.error("Error ejecutando consulta:", err)
     } finally {
       setQueryLoading(false)
     }

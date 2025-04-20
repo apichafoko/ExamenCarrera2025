@@ -9,6 +9,9 @@ import { RefreshCw, Database, Save, CheckCircle2, AlertCircle } from "lucide-rea
 import { syncAllData, syncAlumnos, syncHospitales, syncExamenes } from "@/lib/sync-service"
 import { useToast } from "@/components/ui/use-toast"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export function SyncManager() {
   const { toast } = useToast()
   const [isSyncing, setIsSyncing] = useState(false)
@@ -64,7 +67,12 @@ export function SyncManager() {
         description: "Todos los datos han sido sincronizados correctamente.",
       })
     } catch (error) {
-      console.error("Error en la sincronización:", error)
+      // Reemplazar todas las instancias de console.error con logger.error
+      // Por ejemplo, cambiar:
+      // console.error("Error en la sincronización:", error)
+      // a:
+      // logger.error("Error en la sincronización:", error)
+      logger.error("Error en la sincronización:", error)
       setSyncStatus("error")
       toast({
         title: "Error de sincronización",
@@ -109,7 +117,12 @@ export function SyncManager() {
         throw new Error("Error sincronizando datos")
       }
     } catch (error) {
-      console.error("Error en la sincronización:", error)
+      // Reemplazar todas las instancias de console.error con logger.error
+      // Por ejemplo, cambiar:
+      // console.error("Error en la sincronización:", error)
+      // a:
+      // logger.error("Error en la sincronización:", error)
+      logger.error("Error en la sincronización:", error)
       setSyncStatus("error")
       toast({
         title: "Error de sincronización",

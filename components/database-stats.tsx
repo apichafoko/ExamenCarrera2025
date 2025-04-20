@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { executeQuery } from "@/lib/db"
+// Importar el logger
+import logger from "@/lib/logger"
 
 type DatabaseStats = {
   alumnos: number
@@ -57,7 +59,12 @@ export function DatabaseStats() {
 
         setError(null)
       } catch (err) {
-        console.error("Error obteniendo estadísticas:", err)
+        // Reemplazar console.error con logger.error
+        // Por ejemplo, cambiar:
+        // console.error("Error obteniendo estadísticas:", err)
+        // a:
+        // logger.error("Error obteniendo estadísticas:", err)
+        logger.error("Error obteniendo estadísticas:", err)
         setError("Error al cargar las estadísticas de la base de datos")
       } finally {
         setIsLoading(false)
