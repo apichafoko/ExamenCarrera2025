@@ -27,7 +27,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
-import { examenesService } from "@/lib/db-service"
+//import { examenesService } from "@/lib/db-service"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
@@ -592,34 +592,45 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
     })
 
     try {
-      const examenActualizado = prepararDatosParaGuardar()
+      const examenActualizado = prepararDatosParaGuardar();
 
       if (!examenActualizado) {
-        throw new Error("Error al preparar los datos del examen")
+        throw new Error("Error al preparar los datos del examen");
       }
 
-      console.log("Datos a enviar:", JSON.stringify(examenActualizado, null, 2))
+      console.log("Datos a enviar:", JSON.stringify(examenActualizado, null, 2));
 
-      const resultado = await examenesService.update(examen.id, examenActualizado)
+      // Hacer la solicitud PUT al endpoint /api/examenes/[id]
+      const response = await fetch(`/api/examenes/${examen.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(examenActualizado),
+      });
 
-      if (!resultado) {
-        throw new Error("No se pudo actualizar el examen")
+      // Verificar si la solicitud fue exitosa
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "No se pudo actualizar el examen");
       }
+
+      const resultado = await response.json();
 
       toast({
         title: "Cambios guardados",
         description: "Los datos del examen han sido actualizados correctamente.",
-      })
+      });
 
-      router.push(`/examenes/${id}`)
+      router.push(`/examenes/${id}`);
     } catch (error) {
-      console.error("Error al guardar el examen:", error)
-      setIsLoading(false)
+      console.error("Error al guardar el examen:", error);
+      setIsLoading(false);
       toast({
         title: "Error",
         description: "Ocurrió un error al guardar los cambios. Por favor, intenta nuevamente.",
         variant: "destructive",
-      })
+      });
     }
   }
 
