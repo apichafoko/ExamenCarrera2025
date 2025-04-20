@@ -143,7 +143,7 @@ export default function ExamenDetail({ id }: { id: string }) {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="estaciones" className="flex items-center">
             <ListChecks className="mr-2 h-4 w-4" />
-            Estaciones
+            Casos
           </TabsTrigger>
           <TabsTrigger value="alumnos" className="flex items-center">
             <Users className="mr-2 h-4 w-4" />
@@ -160,10 +160,10 @@ export default function ExamenDetail({ id }: { id: string }) {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Calendar className="mr-2 h-5 w-5" />
-                Estaciones del Examen
+                Casos del Examen
               </CardTitle>
               <CardDescription>
-                {examen.estaciones?.length || 0} estaciones configuradas para este examen
+                {examen.estaciones?.length || 0} casos configurados para este examen
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -182,7 +182,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                 </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  No hay estaciones configuradas para este examen.
+                  No hay casos configurados para este examen.
                 </div>
               )}
             </CardContent>

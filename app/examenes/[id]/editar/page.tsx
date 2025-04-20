@@ -188,7 +188,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
   const handleRemoveEstacion = (estacionId: number) => {
     if (!examen) return
 
-    if (confirm("¿Estás seguro de que deseas eliminar esta estación? Esta acción no se puede deshacer.")) {
+    if (confirm("¿Estás seguro de que deseas eliminar este caso? Esta acción no se puede deshacer.")) {
       const estacion = examen.estaciones.find((e: any) => e.id === estacionId)
       const nuevasEstaciones = examen.estaciones.filter((e: any) => e.id !== estacionId)
 
@@ -215,8 +215,8 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
       }
 
       toast({
-        title: "Estación eliminada",
-        description: "La estación ha sido eliminada de la vista previa.",
+        title: "Caso eliminado",
+        description: "El caso ha sido eliminada de la vista previa.",
       })
     }
   }
@@ -236,8 +236,8 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
     })
 
     toast({
-      title: nuevasEstaciones[estacionIndex].activo ? "Estación activada" : "Estación desactivada",
-      description: `La estación "${nuevasEstaciones[estacionIndex].titulo}" ha sido ${nuevasEstaciones[estacionIndex].activo ? "activada" : "desactivada"}.`,
+      title: nuevasEstaciones[estacionIndex].activo ? "Caso activado" : "Caso desactivado",
+      description: `El caso "${nuevasEstaciones[estacionIndex].titulo}" ha sido ${nuevasEstaciones[estacionIndex].activo ? "activado" : "desactivado"}.`,
     })
   }
 
@@ -883,7 +883,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
           </TabsTrigger>
           <TabsTrigger value="estaciones" className="flex items-center">
             <ListChecks className="mr-2 h-4 w-4" />
-            Estaciones
+            Casos
           </TabsTrigger>
           <TabsTrigger value="evaluadores" className="flex items-center">
             <Users className="mr-2 h-4 w-4" />
@@ -941,9 +941,9 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle>Estaciones del Examen</CardTitle>
+                <CardTitle>Casos de la estación</CardTitle>
                 <Button variant="outline" size="sm" onClick={handleAddEstacion}>
-                  <Plus className="h-4 w-4 mr-1" /> Agregar Estación
+                  <Plus className="h-4 w-4 mr-1" /> Agregar Caso
                 </Button>
               </div>
             </CardHeader>
@@ -1103,18 +1103,18 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
 
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                          <Label htmlFor={`categoria-${estacion.id}-${pregunta.id}`}>
+                                          <Label htmlFor={`categorias-${estacion.id}-${pregunta.id}`}>
                                             Categoría (separadas por ";")
                                           </Label>
                                           <Input
                                             id={`categoria-${estacion.id}-${pregunta.id}`}
                                             placeholder="Ej: Diagnóstico;Conocimiento;Evaluación"
-                                            value={pregunta.categoria || ""}
+                                            value={pregunta.categorias || ""}
                                             onChange={(e) =>
                                               handlePreguntaChange(
                                                 estacion.id,
                                                 pregunta.id,
-                                                "categoria",
+                                                "categorias",
                                                 e.target.value,
                                               )
                                             }
@@ -1205,7 +1205,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
                 </Tabs>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  No hay estaciones configuradas. Haga clic en "Agregar Estación" para crear una.
+                  No hay casos configurados. Haga clic en "Agregar Caso" para crear uno.
                 </div>
               )}
             </CardContent>
@@ -1274,7 +1274,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
                                 {preguntaIndex + 1}. {pregunta.texto || "Descripción de la pregunta"}
                               </p>
                               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                                {pregunta.categoria && <span>Categorías: {pregunta.categoria}</span>}
+                                {pregunta.categorias && <span>Categorías: {pregunta.categorias}</span>}
                                 <span>•</span>
                                 <span>
                                   Tipo: {tiposPregunta.find((t) => t.value === pregunta.tipo)?.label || pregunta.tipo}
@@ -1338,13 +1338,13 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
                   ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  No hay estaciones configuradas para este examen.
+                  No hay casos configuradas para este examen.
                 </div>
               )}
               {examen.estaciones && examen.estaciones.some((estacion: any) => !estacion.activo) && (
                 <div className="mt-4 p-4 bg-gray-100 rounded-md">
                   <p className="text-sm text-gray-500 font-medium">
-                    Nota: Las estaciones inactivas no se muestran en la vista previa y no aparecerán durante la
+                    Nota: Los casos inactivos no se muestran en la vista previa y no aparecerán durante la
                     evaluación.
                   </p>
                 </div>
