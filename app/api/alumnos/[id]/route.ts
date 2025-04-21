@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { alumnosService } from "@/lib/db-service"
+// Importar el logger
+import logger from "@/lib/logger"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -46,7 +48,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       },
     })
   } catch (error) {
-    console.error(`Error al obtener alumno con ID ${params.id}:`, error)
+    logger.error(`Error al obtener alumno con ID ${params.id}:`, error)
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Error al obtener el alumno" },
       { status: 500 },
@@ -97,7 +99,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     return NextResponse.json(serializableAlumno)
   } catch (error) {
-    console.error(`Error al actualizar alumno con ID ${params.id}:`, error)
+    logger.error(`Error al actualizar alumno con ID ${params.id}:`, error)
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Error al actualizar el alumno" },
       { status: 500 },
@@ -121,7 +123,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
     return NextResponse.json({ message: "Alumno eliminado correctamente" })
   } catch (error) {
-    console.error(`Error al eliminar alumno con ID ${params.id}:`, error)
+    logger.error(`Error al eliminar alumno con ID ${params.id}:`, error)
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Error al eliminar el alumno" },
       { status: 500 },

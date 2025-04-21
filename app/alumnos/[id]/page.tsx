@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useToast } from "@/components/ui/use-toast"
+import logger from "@/lib/logger"
 
 export default function DetalleAlumnoPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -52,7 +53,7 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
 
       setAlumno(alumnoData)
     } catch (error) {
-      console.error("Error cargando alumno:", error)
+      logger.error("Error cargando alumno:", error)
       toast({
         title: "Error",
         description: "Ocurrió un error al cargar los datos del alumno.",

@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export function HospitalesClientList() {
   const { toast } = useToast()
   const [busqueda, setBusqueda] = useState("")
@@ -33,7 +36,7 @@ export function HospitalesClientList() {
       setIsLoading(true)
       setError(null)
 
-      console.log("Cargando hospitales...")
+      logger.log("Cargando hospitales...")
       const response = await fetch("/api/hospitales", {
         method: "GET",
         headers: {
@@ -49,17 +52,17 @@ export function HospitalesClientList() {
       }
 
       const data = await response.json()
-      console.log("Datos recibidos:", data)
+      logger.log("Datos recibidos:", data)
 
       if (Array.isArray(data)) {
         setHospitales(data)
       } else {
-        console.error("Los datos recibidos no son un array:", data)
+        logger.error("Los datos recibidos no son un array:", data)
         setHospitales([])
         setError("Los datos recibidos no tienen el formato esperado")
       }
     } catch (error) {
-      console.error("Error cargando hospitales:", error)
+      logger.error("Error cargando hospitales:", error)
       setError(error instanceof Error ? error.message : "Error desconocido al cargar hospitales")
       setHospitales([])
     } finally {
@@ -97,7 +100,7 @@ export function HospitalesClientList() {
         description: "El hospital ha sido eliminado correctamente.",
       })
     } catch (error) {
-      console.error("Error eliminando hospital:", error)
+      logger.error("Error eliminando hospital:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al eliminar el hospital",

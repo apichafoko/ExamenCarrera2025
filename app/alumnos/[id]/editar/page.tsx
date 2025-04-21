@@ -10,6 +10,9 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 
+// Importar el logger
+import logger from "@/lib/logger"
+
 export default function EditarAlumnoPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { toast } = useToast()
@@ -60,7 +63,12 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
 
         setHospitales(hospitalesData)
       } catch (error) {
-        console.error("Error cargando datos:", error)
+        // Reemplazar todas las instancias de console.error
+        // Por ejemplo, cambiar:
+        // console.error("Error cargando datos:", error)
+        // a:
+        // logger.error("Error cargando datos:", error)
+        logger.error("Error cargando datos:", error)
         toast({
           title: "Error",
           description: "Ocurrió un error al cargar los datos.",

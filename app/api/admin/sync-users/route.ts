@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { syncEvaluadoresWithUsers } from "@/lib/sync-users"
+import logger from "@/lib/logger"
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: 500 })
     }
   } catch (error) {
-    console.error("Error al sincronizar usuarios:", error)
+    logger.error("Error al sincronizar usuarios:", error)
     return NextResponse.json({ error: "Error al sincronizar usuarios" }, { status: 500 })
   }
 }

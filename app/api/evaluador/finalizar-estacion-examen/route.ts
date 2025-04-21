@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
           message: "Faltan campos requeridos",
           received: { alumno_examen_id, estacion_id, respuestasCount: respuestas?.length },
         },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -33,10 +33,11 @@ export async function POST(request: NextRequest) {
 
       console.log(`Procesando ${respuestas.length} respuestas para alumno_examen_id=${alumno_examen_id}`)
 
+      /*
       // Escape seguro del texto de respuesta
       const escape = (texto: string) =>
         texto.replace(/'/g, "''") // escapa comillas simples
-
+      
       const insertValues = respuestas
         .map((r) => `(${r.alumno_examen_id}, ${r.pregunta_id}, '${escape(r.respuesta_texto || "")}', ${r.puntaje ?? 0})`)
         .join(", ")
@@ -48,7 +49,19 @@ export async function POST(request: NextRequest) {
         DO UPDATE SET
           respuesta = EXCLUDED.respuesta,
           puntaje = EXCLUDED.puntaje
-      `)
+      `)*/
+
+      // Insertar respuestas usando consulta parametrizada
+      for (const r of respuestas) {
+        await sql`
+          INSERT INTO respuestas_alumnos (alumno_examen_id, pregunta_id, respuesta, puntaje)
+          VALUES (${r.alumno_examen_id}, ${r.pregunta_id}, ${r.respuesta_texto || ""}, ${r.puntaje ?? 0})
+          ON CONFLICT (alumno_examen_id, pregunta_id)
+          DO UPDATE SET
+            respuesta = EXCLUDED.respuesta,
+            puntaje = EXCLUDED.puntaje
+        `
+      }
 
       // UPSERT para resultado de estación
       await sql`
@@ -100,7 +113,7 @@ export async function POST(request: NextRequest) {
           message: "Error durante la transacción",
           error: String(error),
         },
-        { status: 500 }
+        { status: 500 },
       )
     }
   } catch (error) {
@@ -111,7 +124,7 @@ export async function POST(request: NextRequest) {
         error: String(error),
         stack: error instanceof Error ? error.stack : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

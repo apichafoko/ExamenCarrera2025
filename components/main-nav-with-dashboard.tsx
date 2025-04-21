@@ -70,7 +70,7 @@ export function MainNavWithDashboard() {
     },
     {
       href: "/examenes",
-      label: "Exámenes",
+      label: "Estaciones",
       icon: <BookOpen className="h-5 w-5 mr-2" />,
       active: pathname === "/examenes" || pathname.startsWith("/examenes/"),
     },
