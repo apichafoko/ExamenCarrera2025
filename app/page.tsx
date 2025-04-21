@@ -62,16 +62,16 @@ export default function Home() {
   const evaluadorFeatures = [
     {
       icon: <ClipboardCheck className="h-12 w-12 text-primary" />,
-      title: "Toma de Exámenes",
+      title: "Estaciones asignadas",
       description: "Evalúa a los alumnos de manera anónima y objetiva.",
       href: "/tomar-examen",
     },
-    {
+    /*{
       icon: <ClipboardCheck className="h-12 w-12 text-primary" />,
       title: "Examenes Completados",
       description: "Controla los resultados de los examenes completados.",
       href: "/examenes-completados",
-    },
+    },*/
   ]
 
   // Características para colaboradores
@@ -94,14 +94,14 @@ export default function Home() {
           <div className="flex flex-col items-center space-y-4 text-center">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
-                Sistema de Evaluación Académica
+                Examen Clínico Estructurado y Objetivo (ECEO) 2025
               </h1>
               <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
                 {isAdmin
                   ? "Gestiona exámenes, alumnos y evaluaciones de manera eficiente y moderna."
                   : isColaborador
                     ? "Asigna identificaciones a los alumnos y colabora con la organización de los exámenes."
-                    : `Bienvenido, ${user?.nombre}. Accede a los exámenes asignados para evaluación.`}
+                    : `Bienvenido, ${user?.nombre}. Accede a las estaciones asignadas para evaluación.`}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -122,7 +122,7 @@ export default function Home() {
               ) : (
                 <Button asChild size="lg">
                   <Link href="/tomar-examen">
-                    Ir a Exámenes Asignados
+                    Ir a Estaciones Asignadas
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
