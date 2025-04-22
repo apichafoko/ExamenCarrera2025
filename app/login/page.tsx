@@ -36,7 +36,7 @@ export default function LoginPage() {
         toast({
           title: "Inicio de sesión exitoso",
           description: "Bienvenido al sistema de evaluación académica.",
-          duration: 3000,
+          variant: "success",
         })
         router.push("/")
       } else {
