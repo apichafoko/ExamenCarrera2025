@@ -10,6 +10,8 @@ import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+// Importar el logger
+import logger from "@/lib/logger"
 
 export default function ResultadosEvaluacionPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -34,11 +36,11 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
         }
 
         const data = await response.json()
-        console.log("Datos recibidos:", data)
+        logger.log("Datos recibidos:", data)
         setEvaluacion(data)
       } catch (err) {
-        console.error("Error al cargar los resultados:", err)
-        setError(err instanceof Error ? error.message : "Error desconocido al cargar los resultados")
+        logger.error("Error al cargar los resultados:", err)
+        setError(err instanceof Error ? err.message : "Error desconocido al cargar los resultados")
         toast({
           title: "Error",
           description: err instanceof Error ? err.message : "Error al cargar los resultados",
