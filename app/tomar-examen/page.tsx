@@ -12,6 +12,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { Loader2, ClipboardList, CheckCircle, Clock, Calendar, AlertCircle, X } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import logger from "@/lib/logger"
+
 
 export default function TomarExamenPage() {
   const router = useRouter()
@@ -42,12 +44,12 @@ export default function TomarExamenPage() {
       setError(null)
 
       try {
-        console.log(`Cargando exámenes para el usuario con ID: ${user.id}`)
+        logger.log(`Cargando exámenes para el usuario con ID: ${user.id}`)
         const evaluadorResponse = await fetch(`/api/evaluadores/by-id?userId=${user.id}`)
 
         if (!evaluadorResponse.ok) {
           const errorText = await evaluadorResponse.text()
-          console.error("Respuesta completa del error:", errorText)
+          logger.error("Respuesta completa del error:", errorText)
           let errorMessage
           try {
             const errorData = JSON.parse(errorText)
@@ -67,11 +69,11 @@ export default function TomarExamenPage() {
         try {
           evaluador = await evaluadorResponse.json()
         } catch (e) {
-          console.error("Error al parsear la respuesta JSON del evaluador:", e)
+          logger.error("Error al parsear la respuesta JSON del evaluador:", e)
           throw new Error("Error al procesar la respuesta del servidor")
         }
 
-        console.log(`Evaluador encontrado con ID: ${evaluador.id}`)
+        logger.log(`Evaluador encontrado con ID: ${evaluador.id}`)
         let url = `/api/evaluadores/${evaluador.id}/examenes`
         if (filtroEstado !== "todos") {
           url += `?estado=${filtroEstado}`
@@ -81,7 +83,7 @@ export default function TomarExamenPage() {
 
         if (!examenesResponse.ok) {
           const errorText = await examenesResponse.text()
-          console.error("Respuesta completa del error:", errorText)
+          logger.error("Respuesta completa del error:", errorText)
           let errorMessage
           try {
             const errorData = JSON.parse(errorText)
@@ -96,14 +98,14 @@ export default function TomarExamenPage() {
         try {
           examenesData = await examenesResponse.json()
         } catch (e) {
-          console.error("Error al parsear la respuesta JSON de los exámenes:", e)
+          logger.error("Error al parsear la respuesta JSON de los exámenes:", e)
           throw new Error("Error al procesar la respuesta del servidor")
         }
 
-        console.log(`Exámenes cargados: ${examenesData.length}`)
+        logger.log(`Exámenes cargados: ${examenesData.length}`)
         setExamenes(examenesData)
       } catch (error) {
-        console.error("Error al cargar exámenes:", error)
+        logger.error("Error al cargar exámenes:", error)
         setError(error instanceof Error ? error.message : "Error desconocido al cargar exámenes")
         toast({
           title: "Error",
@@ -129,7 +131,7 @@ export default function TomarExamenPage() {
     }
 
     // Si tiene número de identificación, redirigir
-    console.log(`Redirigiendo a /tomar-examen/${id}`)
+    logger.log(`Redirigiendo a /tomar-examen/${id}`)
     router.push(`/tomar-examen/${id}`)
   }
 
