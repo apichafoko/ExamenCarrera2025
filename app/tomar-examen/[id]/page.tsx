@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/context/auth-context"
 import { Slider } from "@/components/ui/slider"
+import { Check } from "lucide-react"
 
 // Componente para mostrar el detalle de un examen asignado a un alumno
 export default function TomarExamenDetallePage({ params }: { params: { id: string } }) {
@@ -340,7 +341,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
         toast({
           title: "Examen finalizado",
-          description: `Calificación final: ${calificacionFinal.toFixed(2)} puntos`,
+          //description: `Calificación final: ${calificacionFinal.toFixed(2)} puntos`,
         })
 
         // Redirigir a la lista de exámenes
@@ -894,9 +895,10 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       setProgresoGuardado(100)
 
-      toast({
-        title: "Examen finalizado",
-        description: `Calificación final: ${calificacionFinal.toFixed(2)} puntos`,
+     toast({
+        title: "Examen finalizado. Se guardo correctamente",
+        variant: "success",
+        //description: `Calificación final: ${calificacionFinal.toFixed(2)} puntos`,
       })
 
       // Redirigir luego de una pausa
@@ -984,11 +986,18 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   return (
     <div className="container mx-auto p-4">
       <Card className="shadow-lg">
-        <CardHeader ref={contentRef} className="border-b">
-          <CardTitle className="text-2xl">{examen.examen_titulo || examen.titulo}</CardTitle>
-          <CardDescription>
-            ID Alumno: {examen.alumno_id} | Alumno: {examen.fecha_inicio}| Estado: {examen.estado}
-          </CardDescription>
+        <CardHeader ref={contentRef} className="border-b flex   justify-between items-center">
+          <div>
+            <CardTitle className="text-2xl text-primary">{examen.examen_titulo || examen.titulo}</CardTitle>
+            <CardDescription>
+              Fecha: {examen.fecha_aplicacion ? new Date(examen.fecha_aplicacion).toLocaleDateString() : "No iniciada"} | Estado: {examen.estado}
+            </CardDescription>
+          </div>
+          <div className="text-right">
+            <span className="text-4xl font-bold text-primary">
+              Cofia: #{examen.numero_identificacion || "Sin asignar"}
+            </span>
+          </div>
         </CardHeader>
 
         {/* Alerta de estación incompleta */}

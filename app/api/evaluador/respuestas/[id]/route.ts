@@ -42,6 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           ae.calificacion as puntaje,
           a.nombre as alumno_nombre,
           a.apellido as alumno_apellido,
+          a.documento as alumno_documento,
           e.titulo as examen_nombre,
           ev.nombre as evaluador_nombre,
           ev.apellido as evaluador_apellido
@@ -140,6 +141,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         fecha_inicio: evaluacion[0].fecha_inicio,
         fecha_fin: evaluacion[0].fecha_fin,
         alumnoNombre: `${evaluacion[0].alumno_nombre || ""} ${evaluacion[0].alumno_apellido || ""}`.trim(),
+        alumno_documento: evaluacion[0].alumno_documento,
         examenNombre: evaluacion[0].examen_nombre,
         evaluadorNombre: `${evaluacion[0].evaluador_nombre || ""} ${evaluacion[0].evaluador_apellido || ""}`.trim(),
         puntajeTotal: puntajes[0]?.puntaje_total || 0,

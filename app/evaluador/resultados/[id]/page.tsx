@@ -135,7 +135,7 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <h3 className="font-medium text-muted-foreground">Alumno</h3>
-                <p className="text-lg font-medium">{evaluacion.alumnoNombre || "No especificado"}</p>
+                <p className="text-lg font-medium">{evaluacion.alumno_documento || "No especificado"}</p>
                 <h3 className="font-medium text-muted-foreground">Tiempo Total:</h3>
                 {evaluacion.fecha_inicio && evaluacion.fecha_fin && (
                   <p className="text-lg font-medium">
@@ -178,7 +178,7 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
                 </p>
               </div>
               <div>
-                <h3 className="font-medium text-muted-foreground">Examen</h3>
+                <h3 className="font-medium text-muted-foreground">Estación</h3>
                 <p className="text-lg font-medium">{evaluacion.examenNombre || "No especificado"}</p>
               </div>
               <div>

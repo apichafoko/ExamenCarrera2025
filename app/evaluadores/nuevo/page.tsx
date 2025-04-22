@@ -8,20 +8,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
-import { useAppContext } from "@/context/app-context"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function NuevoEvaluadorPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { agregarEvaluador } = useAppContext()
   const [isLoading, setIsLoading] = useState(false)
   const [evaluador, setEvaluador] = useState({
     nombre: "",
-    apellido: "", // Added apellido
+    apellido: "",
     email: "",
     especialidad: "",
-    categoria: "", // Removed categoria
+    categoria: "",
     activo: true,
   })
 
@@ -38,15 +36,28 @@ export default function NuevoEvaluadorPage() {
     setIsLoading(true)
 
     try {
-      // Agregar el evaluador en el contexto global
-      await agregarEvaluador({
-        nombre: evaluador.nombre,
-        apellido: evaluador.apellido, // Use apellido
-        email: evaluador.email,
-        especialidad: evaluador.especialidad || "",
-        categoria: evaluador.categoria || "", // Removed categoria
-        activo: evaluador.activo,
+      // Llamada a la API para crear el evaluador
+      const response = await fetch("/api/evaluadores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nombre: evaluador.nombre,
+          apellido: evaluador.apellido,
+          email: evaluador.email,
+          especialidad: evaluador.especialidad || "",
+          categoria: evaluador.categoria || "",
+          activo: evaluador.activo,
+        }),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Error al crear el evaluador")
+      }
+
+      const nuevoEvaluador = await response.json()
 
       toast({
         title: "Evaluador creado",
@@ -127,7 +138,6 @@ export default function NuevoEvaluadorPage() {
                 placeholder="Ej: Cardiología"
               />
             </div>
-            {/* Removed Categoria input */}
             <div className="flex items-center justify-between space-x-2 pt-6">
               <Label htmlFor="activo" className="flex flex-col space-y-1">
                 <span>Estado</span>

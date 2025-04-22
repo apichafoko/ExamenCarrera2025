@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, ClipboardList, CheckCircle, Clock, Calendar, AlertCircle, X } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 export default function TomarExamenPage() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function TomarExamenPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("Pendiente")
   const [error, setError] = useState<string | null>(null)
   const [filtroId, setFiltroId] = useState<string>("")
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false) // Estado para el modal
 
   useEffect(() => {
     if (!user) {
@@ -41,14 +43,11 @@ export default function TomarExamenPage() {
 
       try {
         console.log(`Cargando exámenes para el usuario con ID: ${user.id}`)
-
-        // Obtener el evaluador por ID de usuario - CORREGIDO: URL y parámetro
         const evaluadorResponse = await fetch(`/api/evaluadores/by-id?userId=${user.id}`)
 
         if (!evaluadorResponse.ok) {
           const errorText = await evaluadorResponse.text()
           console.error("Respuesta completa del error:", errorText)
-
           let errorMessage
           try {
             const errorData = JSON.parse(errorText)
@@ -73,8 +72,6 @@ export default function TomarExamenPage() {
         }
 
         console.log(`Evaluador encontrado con ID: ${evaluador.id}`)
-
-        // Obtener los exámenes del evaluador
         let url = `/api/evaluadores/${evaluador.id}/examenes`
         if (filtroEstado !== "todos") {
           url += `?estado=${filtroEstado}`
@@ -85,7 +82,6 @@ export default function TomarExamenPage() {
         if (!examenesResponse.ok) {
           const errorText = await examenesResponse.text()
           console.error("Respuesta completa del error:", errorText)
-
           let errorMessage
           try {
             const errorData = JSON.parse(errorText)
@@ -93,7 +89,6 @@ export default function TomarExamenPage() {
           } catch (e) {
             errorMessage = `Error ${examenesResponse.status}: ${examenesResponse.statusText}`
           }
-
           throw new Error(`Error al obtener los exámenes: ${errorMessage}`)
         }
 
@@ -124,6 +119,16 @@ export default function TomarExamenPage() {
   }, [user, filtroEstado, toast])
 
   const handleTomarExamen = (id: number) => {
+    // Buscar el examen correspondiente al ID
+    const examen = examenes.find((ex) => ex.id === id)
+    
+    // Verificar si numero_identificacion es null, undefined o una cadena vacía
+    if (!examen?.numero_identificacion) {
+      setShowErrorModal(true) // Mostrar el modal de error
+      return
+    }
+
+    // Si tiene número de identificación, redirigir
     console.log(`Redirigiendo a /tomar-examen/${id}`)
     router.push(`/tomar-examen/${id}`)
   }
@@ -154,7 +159,6 @@ export default function TomarExamenPage() {
     }
   }
 
-  // Mostrar un mensaje específico para usuarios que no son evaluadores
   if (error && error.includes("No se encontró un evaluador")) {
     return (
       <div className="container mx-auto p-4">
@@ -179,7 +183,6 @@ export default function TomarExamenPage() {
     )
   }
 
-  // Mostrar un mensaje específico para errores de base de datos
   if (error && error.includes("base de datos")) {
     return (
       <div className="container mx-auto p-4">
@@ -292,7 +295,9 @@ export default function TomarExamenPage() {
                   )
                   .map((examen) => (
                     <TableRow key={examen.id}>
-                      <TableCell className="font-medium">#{examen.numero_identificacion}</TableCell>
+                      <TableCell className="font-medium">
+                        {examen.numero_identificacion ? `#${examen.numero_identificacion}` : "Sin asignar"}
+                      </TableCell>
                       <TableCell>{examen.examen_titulo}</TableCell>
                       <TableCell>
                         <Badge variant={getBadgeVariant(examen.estado)} className="flex w-fit items-center">
@@ -336,6 +341,23 @@ export default function TomarExamenPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de error */}
+      <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>
+              El alumno no tiene número (de cofia) asignado. Por favor, asigna un número antes de tomar el examen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorModal(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
