@@ -13,6 +13,7 @@ import { Loader2, ClipboardList, CheckCircle, Clock, Calendar, AlertCircle, X } 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import logger from "@/lib/logger"
+import { formatDate } from "@/lib/utils"
 
 
 export default function TomarExamenPage() {
@@ -161,6 +162,16 @@ export default function TomarExamenPage() {
     }
   }
 
+  // Función para formatear fecha o mostrar texto alternativo
+  const formatFechaOTexto = (fecha, textoAlternativo = "Fecha no definida") => {
+    if (!fecha) return textoAlternativo
+    try {
+      return formatDate(fecha)
+    } catch (error) {
+      return textoAlternativo
+    }
+  }
+  
   if (error && error.includes("No se encontró un evaluador")) {
     return (
       <div className="container mx-auto p-4">
@@ -310,9 +321,7 @@ export default function TomarExamenPage() {
                       <TableCell>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                          {examen.fecha_aplicacion
-                            ? new Date(examen.fecha_aplicacion).toLocaleDateString()
-                            : "No iniciado"}
+                          {formatFechaOTexto(examen.fecha_aplicacion)}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
