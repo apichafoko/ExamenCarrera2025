@@ -1,3 +1,4 @@
+// ExamenDetail.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -10,6 +11,10 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, Calendar, ListChecks, Users, UserCheck, Loader2, Trash2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
+import { format, isBefore } from "date-fns"
 
 export default function ExamenDetail({ id }: { id: string }) {
   const router = useRouter()
@@ -17,6 +22,9 @@ export default function ExamenDetail({ id }: { id: string }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   useEffect(() => {
     const fetchExamen = async () => {
@@ -37,9 +45,7 @@ export default function ExamenDetail({ id }: { id: string }) {
       }
     }
 
-    if (id) {
-      fetchExamen()
-    }
+    if (id) fetchExamen()
   }, [id])
 
   const handleEliminarExamen = async () => {
@@ -53,10 +59,44 @@ export default function ExamenDetail({ id }: { id: string }) {
       })
       router.push("/examenes")
     } catch (error) {
-      console.error("Error eliminando examen:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al eliminar el examen",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDuplicarExamen = async () => {
+    if (!selectedDate || isBefore(selectedDate, new Date())) {
+      toast({
+        title: "Fecha inválida",
+        description: "La fecha debe ser futura.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/examenes/${id}/duplicar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fecha_aplicacion: selectedDate.toISOString() }),
+      })
+
+      if (!res.ok) throw new Error("No se pudo duplicar el examen")
+
+      const nuevo = await res.json()
+      toast({
+        title: "Examen duplicado",
+        description: `Examen creado para el ${format(selectedDate, "dd/MM/yyyy")}`,
+      })
+      setModalOpen(false)
+      router.push(`/examenes/${nuevo.id}`)
+    } catch (error) {
+      toast({
+        title: "Error al duplicar",
+        description: error instanceof Error ? error.message : "Error inesperado",
         variant: "destructive",
       })
     }
@@ -125,7 +165,7 @@ export default function ExamenDetail({ id }: { id: string }) {
           <CardDescription>Detalles del examen</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <h3 className="font-medium">Descripción</h3>
               <p className="text-muted-foreground">{examen.descripcion || "Sin descripción"}</p>
@@ -134,11 +174,15 @@ export default function ExamenDetail({ id }: { id: string }) {
               <h3 className="font-medium">Estado</h3>
               <Badge variant={examen.estado === "Completado" ? "success" : "secondary"}>{examen.estado}</Badge>
             </div>
+            <div className="flex items-center justify-end">
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => setModalOpen(true)}>
+              <Calendar className="mr-2 h-4 w-4" /> Duplicar nueva fecha
+            </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Tabs: Estaciones, Alumnos, Evaluadores */}
       <Tabs defaultValue="estaciones" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="estaciones" className="flex items-center">
@@ -191,7 +235,7 @@ export default function ExamenDetail({ id }: { id: string }) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Users className="mr-2 h-5 w-5" />
+                <Users className="mr-2 h-4 w-4" />
                 Alumnos Asignados
               </CardTitle>
               <CardDescription>{examen.alumnos?.length || 0} alumnos asignados a este examen</CardDescription>
@@ -219,8 +263,8 @@ export default function ExamenDetail({ id }: { id: string }) {
                               alumno.estado_asignacion === "Completado"
                                 ? "success"
                                 : alumno.estado_asignacion === "En progreso"
-                                  ? "warning"
-                                  : "secondary"
+                                ? "warning"
+                                : "secondary"
                             }
                           >
                             {alumno.estado_asignacion || "Pendiente"}
@@ -241,7 +285,7 @@ export default function ExamenDetail({ id }: { id: string }) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <UserCheck className="mr-2 h-5 w-5" />
+                <UserCheck className="mr-2 h-4 w-4" />
                 Evaluadores Habilitados
               </CardTitle>
               <CardDescription>
@@ -279,6 +323,35 @@ export default function ExamenDetail({ id }: { id: string }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicar examen en otra fecha</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Seleccioná la nueva fecha de aplicación para el examen duplicado.
+            </p>
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              minDate={new Date()}
+              dateFormat="dd/MM/yyyy"
+              className="w-full border border-input rounded-md p-2 text-sm"
+              placeholderText="Seleccionar fecha"
+            />
+          </div>
+          <DialogFooter className="pt-4">
+            <Button variant="ghost" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleDuplicarExamen} disabled={!selectedDate}>
+              Duplicar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -790,6 +790,18 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
   // Modificar la función guardarYFinalizarExamen para mejorar el manejo de errores
   const guardarYFinalizarExamen = async (estacionIndex: number) => {
+   // Verificar si todas las preguntas están respondidas
+    if (!verificarEstacionCompleta(estacionIndex)) {
+      setMostrarAlertaEstacionIncompleta(true)
+
+      // Hacer scroll al mensaje de alerta
+      if (contentRef.current) {
+        contentRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+
+      return
+    }
+   
     try {
       setGuardando(true)
       setMostrarProgreso(true)
@@ -903,8 +915,9 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
             <span>Examen finalizado. Se guardó correctamente</span>
           </div>
         ),
+        className: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg",
         variant: "success",
-        duration: 5000,
+        duration: 2000,
       })
 
       // Redirigir luego de una pausa

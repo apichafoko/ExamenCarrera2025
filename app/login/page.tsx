@@ -31,13 +31,17 @@ export default function LoginPage() {
 
     try {
       const success = await login(formData.email, formData.password)
-
       if (success) {
         toast({
-          title: "Inicio de sesión exitoso",
-          description: "Bienvenido al sistema de evaluación académica.",
-          variant: "success",
-        })
+            title: (
+              <div className="flex items-center gap-2">
+                <span>Bienvenido al sistema de evaluación académica</span>
+              </div>
+            ),
+            className: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg",
+            variant: "success",
+            duration: 2000,
+          })
         router.push("/")
       } else {
         setError("Credenciales inválidas. Por favor, inténtalo de nuevo.")
