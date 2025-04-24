@@ -15,7 +15,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import logger from "@/lib/logger"
 import { formatDate } from "@/lib/utils"
 
-
 export default function TomarExamenPage() {
   const router = useRouter()
   const { user } = useAuth()
@@ -25,7 +24,7 @@ export default function TomarExamenPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("Pendiente")
   const [error, setError] = useState<string | null>(null)
   const [filtroId, setFiltroId] = useState<string>("")
-  const [showErrorModal, setShowErrorModal] = useState<boolean>(false) // Estado para el modal
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false)
 
   useEffect(() => {
     if (!user) {
@@ -122,16 +121,11 @@ export default function TomarExamenPage() {
   }, [user, filtroEstado, toast])
 
   const handleTomarExamen = (id: number) => {
-    // Buscar el examen correspondiente al ID
     const examen = examenes.find((ex) => ex.id === id)
-    
-    // Verificar si numero_identificacion es null, undefined o una cadena vacía
     if (!examen?.numero_identificacion) {
-      setShowErrorModal(true) // Mostrar el modal de error
+      setShowErrorModal(true)
       return
     }
-
-    // Si tiene número de identificación, redirigir
     logger.log(`Redirigiendo a /tomar-examen/${id}`)
     router.push(`/tomar-examen/${id}`)
   }
@@ -162,7 +156,6 @@ export default function TomarExamenPage() {
     }
   }
 
-  // Función para formatear fecha o mostrar texto alternativo
   const formatFechaOTexto = (fecha, textoAlternativo = "Fecha no definida") => {
     if (!fecha) return textoAlternativo
     try {
@@ -171,7 +164,15 @@ export default function TomarExamenPage() {
       return textoAlternativo
     }
   }
-  
+
+  // Calcular el número de resultados filtrados
+  const filteredExamenes = examenes.filter((examen) =>
+    filtroId
+      ? examen.numero_identificacion && examen.numero_identificacion.toString().includes(filtroId)
+      : true,
+  )
+  const resultCount = filteredExamenes.length
+
   if (error && error.includes("No se encontró un evaluador")) {
     return (
       <div className="container mx-auto p-4">
@@ -261,6 +262,10 @@ export default function TomarExamenPage() {
               </Select>
             </div>
           </div>
+          {/* Mostrar el número de resultados filtrados */}
+          <p className="mt-4 text-sm text-muted-foreground">
+            Mostrando {resultCount} {resultCount === 1 ? "resultado" : "resultados"}
+          </p>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -300,53 +305,47 @@ export default function TomarExamenPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {examenes
-                  .filter((examen) =>
-                    filtroId
-                      ? examen.numero_identificacion && examen.numero_identificacion.toString().includes(filtroId)
-                      : true,
-                  )
-                  .map((examen) => (
-                    <TableRow key={examen.id}>
-                      <TableCell className="font-medium">
-                        {examen.numero_identificacion ? `#${examen.numero_identificacion}` : "Sin asignar"}
-                      </TableCell>
-                      <TableCell>{examen.examen_titulo}</TableCell>
-                      <TableCell>
-                        <Badge variant={getBadgeVariant(examen.estado)} className="flex w-fit items-center">
-                          {getBadgeIcon(examen.estado)}
-                          {examen.estado}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                          {formatFechaOTexto(examen.fecha_aplicacion)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {examen.estado === "Pendiente" && (
-                          <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
-                            Tomar Examen
-                          </Button>
-                        )}
-                        {examen.estado === "En Progreso" && (
-                          <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
-                            Continuar
-                          </Button>
-                        )}
-                        {examen.estado === "Completado" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => router.push(`/evaluador/resultados/${examen.id}`)}
-                          >
-                            Ver Resultados
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                {filteredExamenes.map((examen) => (
+                  <TableRow key={examen.id}>
+                    <TableCell className="font-medium">
+                      {examen.numero_identificacion ? `#${examen.numero_identificacion}` : "Sin asignar"}
+                    </TableCell>
+                    <TableCell>{examen.examen_titulo}</TableCell>
+                    <TableCell>
+                      <Badge variant={getBadgeVariant(examen.estado)} className="flex w-fit items-center">
+                        {getBadgeIcon(examen.estado)}
+                        {examen.estado}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+                        {formatFechaOTexto(examen.fecha_aplicacion)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {examen.estado === "Pendiente" && (
+                        <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
+                          Tomar Examen
+                        </Button>
+                      )}
+                      {examen.estado === "En Progreso" && (
+                        <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
+                          Continuar
+                        </Button>
+                      )}
+                      {examen.estado === "Completado" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/evaluador/resultados/${examen.id}`)}
+                        >
+                          Ver Resultados
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
