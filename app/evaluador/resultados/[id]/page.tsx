@@ -290,6 +290,9 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
                         <p className="text-muted-foreground text-sm">
                           {pregunta.estacion_nombre || "Estación no especificada"}
                         </p>
+                        <p className="text-muted-foreground text-sm">
+                          Puntaje: {pregunta.puntaje_maximo}
+                        </p>
                       </div>
 
                       <div className="space-y-2">
