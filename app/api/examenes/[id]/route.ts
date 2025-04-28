@@ -394,6 +394,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             }
             await executeQuery("DELETE FROM preguntas WHERE id = ANY($1)", [preguntasAEliminar])
           }
+
+            // NUEVO: Calcular y actualizar el puntaje_maximo de la estación
+            const puntajeMaximoQuery = `
+              SELECT COALESCE(SUM(puntaje), 0) as puntaje_maximo
+              FROM preguntas
+              WHERE estacion_id = $1 AND puntaje IS NOT NULL
+            `;
+            const puntajeMaximoResult = await executeQuery(puntajeMaximoQuery, [estacionId]);
+            const puntajeMaximo = Number.parseFloat(puntajeMaximoResult[0].puntaje_maximo);
+
+            const updatePuntajeMaximoQuery = `
+              UPDATE estaciones
+              SET puntaje_maximo = $1
+              WHERE id = $2
+            `;
+            await executeQuery(updatePuntajeMaximoQuery, [puntajeMaximo, estacionId]);
         }
       }
 

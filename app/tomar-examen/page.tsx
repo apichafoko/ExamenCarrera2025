@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, ClipboardList, CheckCircle, Clock, Calendar, AlertCircle, X } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import logger from "@/lib/logger"
+import { formatDate } from "@/lib/utils"
 
 export default function TomarExamenPage() {
   const router = useRouter()
@@ -21,6 +24,7 @@ export default function TomarExamenPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("Pendiente")
   const [error, setError] = useState<string | null>(null)
   const [filtroId, setFiltroId] = useState<string>("")
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false)
 
   useEffect(() => {
     if (!user) {
@@ -40,15 +44,12 @@ export default function TomarExamenPage() {
       setError(null)
 
       try {
-        console.log(`Cargando exámenes para el usuario con ID: ${user.id}`)
-
-        // Obtener el evaluador por ID de usuario - CORREGIDO: URL y parámetro
+        logger.log(`Cargando exámenes para el usuario con ID: ${user.id}`)
         const evaluadorResponse = await fetch(`/api/evaluadores/by-id?userId=${user.id}`)
 
         if (!evaluadorResponse.ok) {
           const errorText = await evaluadorResponse.text()
-          console.error("Respuesta completa del error:", errorText)
-
+          logger.error("Respuesta completa del error:", errorText)
           let errorMessage
           try {
             const errorData = JSON.parse(errorText)
@@ -68,13 +69,11 @@ export default function TomarExamenPage() {
         try {
           evaluador = await evaluadorResponse.json()
         } catch (e) {
-          console.error("Error al parsear la respuesta JSON del evaluador:", e)
+          logger.error("Error al parsear la respuesta JSON del evaluador:", e)
           throw new Error("Error al procesar la respuesta del servidor")
         }
 
-        console.log(`Evaluador encontrado con ID: ${evaluador.id}`)
-
-        // Obtener los exámenes del evaluador
+        logger.log(`Evaluador encontrado con ID: ${evaluador.id}`)
         let url = `/api/evaluadores/${evaluador.id}/examenes`
         if (filtroEstado !== "todos") {
           url += `?estado=${filtroEstado}`
@@ -84,8 +83,7 @@ export default function TomarExamenPage() {
 
         if (!examenesResponse.ok) {
           const errorText = await examenesResponse.text()
-          console.error("Respuesta completa del error:", errorText)
-
+          logger.error("Respuesta completa del error:", errorText)
           let errorMessage
           try {
             const errorData = JSON.parse(errorText)
@@ -93,7 +91,6 @@ export default function TomarExamenPage() {
           } catch (e) {
             errorMessage = `Error ${examenesResponse.status}: ${examenesResponse.statusText}`
           }
-
           throw new Error(`Error al obtener los exámenes: ${errorMessage}`)
         }
 
@@ -101,14 +98,14 @@ export default function TomarExamenPage() {
         try {
           examenesData = await examenesResponse.json()
         } catch (e) {
-          console.error("Error al parsear la respuesta JSON de los exámenes:", e)
+          logger.error("Error al parsear la respuesta JSON de los exámenes:", e)
           throw new Error("Error al procesar la respuesta del servidor")
         }
 
-        console.log(`Exámenes cargados: ${examenesData.length}`)
+        logger.log(`Exámenes cargados: ${examenesData.length}`)
         setExamenes(examenesData)
       } catch (error) {
-        console.error("Error al cargar exámenes:", error)
+        logger.error("Error al cargar exámenes:", error)
         setError(error instanceof Error ? error.message : "Error desconocido al cargar exámenes")
         toast({
           title: "Error",
@@ -124,7 +121,12 @@ export default function TomarExamenPage() {
   }, [user, filtroEstado, toast])
 
   const handleTomarExamen = (id: number) => {
-    console.log(`Redirigiendo a /tomar-examen/${id}`)
+    const examen = examenes.find((ex) => ex.id === id)
+    if (!examen?.numero_identificacion) {
+      setShowErrorModal(true)
+      return
+    }
+    logger.log(`Redirigiendo a /tomar-examen/${id}`)
     router.push(`/tomar-examen/${id}`)
   }
 
@@ -154,7 +156,23 @@ export default function TomarExamenPage() {
     }
   }
 
-  // Mostrar un mensaje específico para usuarios que no son evaluadores
+  const formatFechaOTexto = (fecha, textoAlternativo = "Fecha no definida") => {
+    if (!fecha) return textoAlternativo
+    try {
+      return formatDate(fecha)
+    } catch (error) {
+      return textoAlternativo
+    }
+  }
+
+  // Calcular el número de resultados filtrados
+  const filteredExamenes = examenes.filter((examen) =>
+    filtroId
+      ? examen.numero_identificacion && examen.numero_identificacion.toString().includes(filtroId)
+      : true,
+  )
+  const resultCount = filteredExamenes.length
+
   if (error && error.includes("No se encontró un evaluador")) {
     return (
       <div className="container mx-auto p-4">
@@ -179,7 +197,6 @@ export default function TomarExamenPage() {
     )
   }
 
-  // Mostrar un mensaje específico para errores de base de datos
   if (error && error.includes("base de datos")) {
     return (
       <div className="container mx-auto p-4">
@@ -245,6 +262,10 @@ export default function TomarExamenPage() {
               </Select>
             </div>
           </div>
+          {/* Mostrar el número de resultados filtrados */}
+          <p className="mt-4 text-sm text-muted-foreground">
+            Mostrando {resultCount} {resultCount === 1 ? "resultado" : "resultados"}
+          </p>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -284,58 +305,69 @@ export default function TomarExamenPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {examenes
-                  .filter((examen) =>
-                    filtroId
-                      ? examen.numero_identificacion && examen.numero_identificacion.toString().includes(filtroId)
-                      : true,
-                  )
-                  .map((examen) => (
-                    <TableRow key={examen.id}>
-                      <TableCell className="font-medium">#{examen.numero_identificacion}</TableCell>
-                      <TableCell>{examen.examen_titulo}</TableCell>
-                      <TableCell>
-                        <Badge variant={getBadgeVariant(examen.estado)} className="flex w-fit items-center">
-                          {getBadgeIcon(examen.estado)}
-                          {examen.estado}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                          {examen.fecha_aplicacion
-                            ? new Date(examen.fecha_aplicacion).toLocaleDateString()
-                            : "No iniciado"}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {examen.estado === "Pendiente" && (
-                          <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
-                            Tomar Examen
-                          </Button>
-                        )}
-                        {examen.estado === "En Progreso" && (
-                          <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
-                            Continuar
-                          </Button>
-                        )}
-                        {examen.estado === "Completado" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => router.push(`/evaluador/resultados/${examen.id}`)}
-                          >
-                            Ver Resultados
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                {filteredExamenes.map((examen) => (
+                  <TableRow key={examen.id}>
+                    <TableCell className="font-medium">
+                      {examen.numero_identificacion ? `#${examen.numero_identificacion}` : "Sin asignar"}
+                    </TableCell>
+                    <TableCell>{examen.examen_titulo}</TableCell>
+                    <TableCell>
+                      <Badge variant={getBadgeVariant(examen.estado)} className="flex w-fit items-center">
+                        {getBadgeIcon(examen.estado)}
+                        {examen.estado}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+                        {formatFechaOTexto(examen.fecha_aplicacion)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {examen.estado === "Pendiente" && (
+                        <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
+                          Tomar Examen
+                        </Button>
+                      )}
+                      {examen.estado === "En Progreso" && (
+                        <Button size="sm" onClick={() => handleTomarExamen(examen.id)}>
+                          Continuar
+                        </Button>
+                      )}
+                      {examen.estado === "Completado" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/evaluador/resultados/${examen.id}`)}
+                        >
+                          Ver Resultados
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de error */}
+      <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>
+              El alumno no tiene número (de cofia) asignado. Por favor, asigna un número antes de tomar el examen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorModal(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

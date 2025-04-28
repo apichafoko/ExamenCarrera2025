@@ -15,6 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/context/auth-context"
 import { Slider } from "@/components/ui/slider"
+import { Check } from "lucide-react"
+// Importar el logger
+import logger from "@/lib/logger"
 
 // Componente para mostrar el detalle de un examen asignado a un alumno
 export default function TomarExamenDetallePage({ params }: { params: { id: string } }) {
@@ -54,7 +57,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         setLoading(true)
         setError(null)
 
-        console.log(`Cargando examen con ID de asignación: ${params.id}`)
+        logger.log(`Cargando examen con ID de asignación: ${params.id}`)
 
         // Primero obtenemos el evaluador asociado al usuario por su email
         const evaluadorResponse = await fetch(`/api/evaluadores/by-id?userId=${user.id}`)
@@ -64,7 +67,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
             throw new Error(`No se encontró un evaluador con el id ${user.id}`)
           } else {
             const errorText = await evaluadorResponse.text()
-            console.error("Respuesta de error completa:", errorText)
+            logger.error("Respuesta de error completa:", errorText)
             throw new Error(`Error al obtener el evaluador: ${evaluadorResponse.statusText}`)
           }
         }
@@ -85,7 +88,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         }
 
         const data = await response.json()
-        console.log("Examen cargado:", data)
+        logger.log("Examen cargado:", data)
 
         if (!data) {
           throw new Error("No se encontró el examen solicitado")
@@ -94,9 +97,9 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         // Filtrar solo las estaciones activas
         if (data.estaciones && data.estaciones.length > 0) {
           data.estaciones = data.estaciones.filter((estacion) => estacion.activo !== false)
-          console.log(`Estaciones activas: ${data.estaciones.length}`)
+          logger.log(`Estaciones activas: ${data.estaciones.length}`)
         } else {
-          console.log("No se encontraron estaciones para este examen")
+          logger.log("No se encontraron estaciones para este examen")
         }
 
         setExamen(data)
@@ -138,7 +141,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
         // Si el examen está en estado "Pendiente", iniciarlo automáticamente
         if (data.estado === "Pendiente") {
-          console.log("Iniciando examen automáticamente...")
+          logger.log("Iniciando examen automáticamente...")
           await iniciarExamen()
         }
 
@@ -152,10 +155,10 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
             }
           }
           setActiveTab(`estacion-${primeraEstacionSinCompletar}`)
-          console.log(`Posicionando en la primera estación sin completar: estacion-${primeraEstacionSinCompletar}`)
+          logger.log(`Posicionando en la primera estación sin completar: estacion-${primeraEstacionSinCompletar}`)
         }
       } catch (error) {
-        console.error("Error al cargar el examen:", error)
+        logger.error("Error al cargar el examen:", error)
         setError(error instanceof Error ? error.message : "Error al cargar el examen")
       } finally {
         setLoading(false)
@@ -207,7 +210,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   // Iniciar el examen
   const iniciarExamen = async () => {
     try {
-      console.log("Iniciando examen...")
+      logger.log("Iniciando examen...")
       const response = await fetch(`/api/evaluador/examenes/${params.id}`, {
         method: "PUT",
         headers: {
@@ -218,7 +221,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("Respuesta de error:", errorText)
+        logger.error("Respuesta de error:", errorText)
 
         let errorMessage = "Error al iniciar el examen"
         try {
@@ -234,7 +237,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       }
 
       const data = await response.json()
-      console.log("Examen iniciado:", data)
+      logger.log("Examen iniciado:", data)
       setExamen((prev: any) => ({ ...prev, estado: data.estado, fecha_inicio: data.fecha_inicio }))
 
       //toast({
@@ -242,7 +245,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       //description: "El examen ha sido iniciado correctamente.",
       //})
     } catch (error) {
-      console.error("Error al iniciar el examen:", error)
+      logger.error("Error al iniciar el examen:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al iniciar el examen",
@@ -254,7 +257,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   // Finalizar el examen
   const finalizarExamen = async () => {
     try {
-      console.log("Finalizando examen...")
+      logger.log("Finalizando examen...")
       setMostrarProgreso(true)
       setProgresoGuardado(10)
 
@@ -284,7 +287,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       // Calcular el promedio
       const calificacionFinal = estacionesConCalificacion > 0 ? calificacionTotal / estacionesConCalificacion : 0
 
-      console.log(`Calificación final calculada: ${calificacionFinal}`)
+      logger.log(`Calificación final calculada: ${calificacionFinal}`)
 
       // Preparar los datos para finalizar el examen
       const datosFinalizacion = {
@@ -307,7 +310,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("Respuesta de error:", errorText)
+        logger.error("Respuesta de error:", errorText)
 
         let errorMessage = "Error al finalizar el examen"
         try {
@@ -323,7 +326,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       }
 
       const data = await response.json()
-      console.log("Examen finalizado:", data)
+      logger.log("Examen finalizado:", data)
       setExamen((prev: any) => ({
         ...prev,
         estado: data.estado,
@@ -339,15 +342,21 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         setMostrarProgreso(false)
 
         toast({
-          title: "Examen finalizado",
-          description: `Calificación final: ${calificacionFinal.toFixed(2)} puntos`,
+          title: (
+            <div className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-500" />
+              <span>Examen finalizado. Se guardó correctamente</span>
+            </div>
+          ),
+          variant: "success",
+          duration: 5000,
         })
 
         // Redirigir a la lista de exámenes
         router.push("/tomar-examen")
       }, 500)
     } catch (error) {
-      console.error("Error al finalizar el examen:", error)
+      logger.error("Error al finalizar el examen:", error)
       setMostrarProgreso(false)
       toast({
         title: "Error",
@@ -510,7 +519,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
         if (!contentType?.includes("application/json")) {
           const errorText = await response.text()
-          console.error("Respuesta no es JSON:", errorText)
+          logger.error("Respuesta no es JSON:", errorText)
           throw new Error(`Error al guardar las respuestas: Respuesta del servidor no es JSON`)
         }
         const contentTypeHeader = response.headers.get("content-type")
@@ -520,13 +529,13 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
           throw new Error(errorData.message || `Error al guardar las respuestas: ${response.status}`)
         } else {
           const errorText = await response.text()
-          console.error("Respuesta de error NO JSON:", errorText)
+          logger.error("Respuesta de error NO JSON:", errorText)
           throw new Error(`Error inesperado del servidor. Código ${response.status}`)
         }
       }
 
       const data = await response.json()
-      console.log("Respuestas guardadas:", data)
+      logger.log("Respuestas guardadas:", data)
 
       // Actualizar respuestas originales
       const nuevasRespuestasOriginales = { ...respuestasOriginales }
@@ -576,7 +585,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       return true
     } catch (error) {
-      console.error("Error al guardar las respuestas:", error)
+      logger.error("Error al guardar las respuestas:", error)
       setMostrarProgreso(false)
       toast({
         title: "Error",
@@ -592,7 +601,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   // Guardar el resultado de una estación
   const guardarResultadoEstacion = async (estacion: any, estacionIndex: number) => {
     try {
-      console.log(`Guardando resultado para estación ${estacion.id}`)
+      logger.log(`Guardando resultado para estación ${estacion.id}`)
 
       // Calcular el puntaje total sumando los puntajes de las respuestas
       let puntajeTotal = 0
@@ -616,7 +625,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         }
       }
 
-      console.log(`Puntaje calculado para estación ${estacion.id}: ${puntajeTotal}`)
+      logger.log(`Puntaje calculado para estación ${estacion.id}: ${puntajeTotal}`)
 
       // Obtener las observaciones de la estación
       const observaciones = observacionesEstacion[`estacion-${estacionIndex}`] || ""
@@ -645,7 +654,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       }
 
       const data = await response.json()
-      console.log("Resultado de estación guardado:", data)
+      logger.log("Resultado de estación guardado:", data)
 
       toast({
         title: "Estación completada",
@@ -655,7 +664,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       return data
     } catch (error) {
-      console.error("Error al guardar el resultado de la estación:", error)
+      logger.error("Error al guardar el resultado de la estación:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al guardar el resultado de la estación",
@@ -781,6 +790,18 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
   // Modificar la función guardarYFinalizarExamen para mejorar el manejo de errores
   const guardarYFinalizarExamen = async (estacionIndex: number) => {
+   // Verificar si todas las preguntas están respondidas
+    if (!verificarEstacionCompleta(estacionIndex)) {
+      setMostrarAlertaEstacionIncompleta(true)
+
+      // Hacer scroll al mensaje de alerta
+      if (contentRef.current) {
+        contentRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+
+      return
+    }
+   
     try {
       setGuardando(true)
       setMostrarProgreso(true)
@@ -790,13 +811,6 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       const alumnoExamenId = Number(params.id)
 
       // Preparar respuestas
-      /*const respuestasAGuardar = estacionActual.preguntas.map((pregunta: any) => ({
-        alumno_examen_id: alumnoExamenId, // Añadir alumno_examen_id a cada respuesta
-        pregunta_id: pregunta.id,
-        puntaje = 0,
-        respuesta_texto: respuestas[pregunta.id] || "", // Asegurar que nunca sea undefined
-      }))*/
-
       const respuestasAGuardar = estacionActual.preguntas.map((pregunta: any) => {
         const respuestaUsuario = respuestas[pregunta.id]?.toLowerCase() || ""
         const puntajePregunta = Number(pregunta.puntaje) || 0
@@ -816,7 +830,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         }
       })
 
-      console.log("Respuestas a guardar:", respuestasAGuardar)
+      logger.log("Respuestas a guardar:", respuestasAGuardar)
 
       // Calcular puntaje de la estación
       let puntajeTotal = 0
@@ -856,8 +870,8 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         observaciones_examen: observacionesExamen || "",
       }
 
-      console.log("Datos a enviar:", JSON.stringify(datosFinalizacion))
-      console.log("Token en header:", localStorage.getItem("token"))
+      logger.log("Datos a enviar:", JSON.stringify(datosFinalizacion))
+      logger.log("Token en header:", localStorage.getItem("token"))
 
       // Corregir la URL del endpoint (eliminar espacios)
       const response = await fetch("/api/evaluador/finalizar-estacion-examen", {
@@ -877,26 +891,33 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
           if (contentType && contentType.includes("application/json")) {
             const errorData = await response.json()
             errorMessage = errorData.message || errorMessage
-            console.error("Error detallado:", errorData)
+            logger.error("Error detallado:", errorData)
           } else {
             const errorText = await response.text()
-            console.error("Respuesta de error (texto):", errorText)
+            logger.error("Respuesta de error (texto):", errorText)
           }
         } catch (parseError) {
-          console.error("Error al parsear la respuesta:", parseError)
+          logger.error("Error al parsear la respuesta:", parseError)
         }
 
         throw new Error(errorMessage)
       }
 
       const data = await response.json()
-      console.log("Respuesta exitosa:", data)
+      logger.log("Respuesta exitosa:", data)
 
       setProgresoGuardado(100)
 
       toast({
-        title: "Examen finalizado",
-        description: `Calificación final: ${calificacionFinal.toFixed(2)} puntos`,
+        title: (
+          <div className="flex items-center gap-2">
+            <Check className="h-5 w-5 text-green-500" />
+            <span>Examen finalizado. Se guardó correctamente</span>
+          </div>
+        ),
+        className: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg",
+        variant: "success",
+        duration: 2000,
       })
 
       // Redirigir luego de una pausa
@@ -905,7 +926,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         router.push("/tomar-examen")
       }, 500)
     } catch (error) {
-      console.error("Error en guardarYFinalizarExamen:", error)
+      logger.error("Error en guardarYFinalizarExamen:", error)
       setMostrarProgreso(false)
       toast({
         title: "Error",
@@ -984,11 +1005,18 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   return (
     <div className="container mx-auto p-4">
       <Card className="shadow-lg">
-        <CardHeader ref={contentRef} className="border-b">
-          <CardTitle className="text-2xl">{examen.examen_titulo || examen.titulo}</CardTitle>
-          <CardDescription>
-            ID Alumno: {examen.alumno_id} | Alumno: {examen.fecha_inicio}| Estado: {examen.estado}
-          </CardDescription>
+        <CardHeader ref={contentRef} className="border-b flex justify-between items-center">
+          <div>
+            <CardTitle className="text-2xl text-primary">{examen.examen_titulo || examen.titulo}</CardTitle>
+            <CardDescription>
+              Fecha: {examen.fecha_aplicacion ? new Date(examen.fecha_aplicacion).toLocaleDateString() : "No iniciada"} | Estado: {examen.estado}
+            </CardDescription>
+          </div>
+          <div className="text-right">
+            <span className="text-4xl font-bold text-primary">
+              Cofia: #{examen.numero_identificacion || "Sin asignar"}
+            </span>
+          </div>
         </CardHeader>
 
         {/* Alerta de estación incompleta */}

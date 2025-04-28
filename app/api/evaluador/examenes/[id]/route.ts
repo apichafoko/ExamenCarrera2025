@@ -19,6 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
              a.apellido as alumno_apellido,
              e.titulo as examen_titulo, 
              e.descripcion as examen_descripcion,
+             e.fecha_aplicacion as fecha_aplicacion,
              e.id as examen_id
       FROM alumnos_examenes ae
       JOIN alumnos a ON ae.alumno_id = a.id

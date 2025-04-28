@@ -167,7 +167,7 @@ export default function AsignacionIdentificacionPage() {
                   {fechas.length > 0 ? (
                     fechas.map((fecha) => (
                       <SelectItem key={fecha.fecha} value={fecha.fecha}>
-                        {fecha.fecha} ({fecha.cantidad} exámenes)
+                        {fecha.fecha} ({fecha.cantidad} estaciones)
                       </SelectItem>
                     ))
                   ) : (

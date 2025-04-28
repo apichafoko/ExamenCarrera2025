@@ -359,11 +359,30 @@ export const examenesService = {
   getAll: async (): Promise<Examen[]> => {
     const query = `SELECT 
   e.*, 
-  COUNT(ae.alumno_id) AS cantidad_alumnos
+  COALESCE(alumnos.cantidad_alumnos, 0) AS cantidad_alumnos,
+  COALESCE(evaluadores.evaluadores, '[]'::json) AS evaluadores
 FROM examenes e
-LEFT JOIN alumnos_examenes ae ON ae.examen_id = e.id
-GROUP BY e.id
-ORDER BY e.fecha_aplicacion DESC`
+LEFT JOIN (
+  SELECT examen_id, COUNT(*) AS cantidad_alumnos
+  FROM alumnos_examenes
+  GROUP BY examen_id
+) AS alumnos ON alumnos.examen_id = e.id
+LEFT JOIN (
+  SELECT 
+    ee.examen_id,
+    json_agg(
+      DISTINCT jsonb_build_object(
+        'id', ev.id,
+        'nombre', ev.nombre,
+        'apellido', ev.apellido
+      )
+    ) AS evaluadores
+  FROM examenes_evaluadores ee
+  JOIN evaluadores ev ON ev.id = ee.evaluador_id
+  GROUP BY ee.examen_id
+) AS evaluadores ON evaluadores.examen_id = e.id
+ORDER BY e.fecha_aplicacion DESC
+`
     return executeQuery(query)
   },
   getById: async (id: number): Promise<Examen | null> => {

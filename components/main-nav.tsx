@@ -125,16 +125,16 @@ export function MainNav() {
     },
     {
       href: "/tomar-examen",
-      label: "Tomar Examen",
+      label: "Comenzar estación",
       icon: <ClipboardCheck className="h-5 w-5 mr-2" />,
       active: pathname === "/tomar-examen" || pathname.startsWith("/tomar-examen/"),
     },
-    {
+    /*{
       href: "/examenes-completados",
       label: "Exámenes Completados",
       icon: <ClipboardCheck className="h-5 w-5 mr-2" />,
       active: pathname === "/examenes-completados",
-    },
+    },*/
   ]
 
   // Seleccionar las rutas según el rol

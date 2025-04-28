@@ -76,8 +76,19 @@ export function AsignarIdentificacionModal({
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Error al asignar número de identificación")
+        let errorMessage = "Error al asignar número de identificación"
+        try {
+          const errorData = await response.json()
+          // Manejar el error específico de duplicado del backend
+          if (errorData.error.includes("ya está asignado")) {
+            setError("El número de identificación ya está asignado a otro alumno en esta fecha")
+            return
+          }
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          logger.error("No se pudo parsear la respuesta de error:", e)
+        }
+        throw new Error(errorMessage)
       }
 
       onSuccess()

@@ -10,6 +10,8 @@ import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+// Importar el logger
+import logger from "@/lib/logger"
 
 export default function ResultadosEvaluacionPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -34,11 +36,11 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
         }
 
         const data = await response.json()
-        console.log("Datos recibidos:", data)
+        logger.log("Datos recibidos:", data)
         setEvaluacion(data)
       } catch (err) {
-        console.error("Error al cargar los resultados:", err)
-        setError(err instanceof Error ? error.message : "Error desconocido al cargar los resultados")
+        logger.error("Error al cargar los resultados:", err)
+        setError(err instanceof Error ? err.message : "Error desconocido al cargar los resultados")
         toast({
           title: "Error",
           description: err instanceof Error ? err.message : "Error al cargar los resultados",
@@ -135,7 +137,7 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <h3 className="font-medium text-muted-foreground">Alumno</h3>
-                <p className="text-lg font-medium">{evaluacion.alumnoNombre || "No especificado"}</p>
+                <p className="text-lg font-medium">{evaluacion.alumno_documento || "No especificado"}</p>
                 <h3 className="font-medium text-muted-foreground">Tiempo Total:</h3>
                 {evaluacion.fecha_inicio && evaluacion.fecha_fin && (
                   <p className="text-lg font-medium">
@@ -178,7 +180,7 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
                 </p>
               </div>
               <div>
-                <h3 className="font-medium text-muted-foreground">Examen</h3>
+                <h3 className="font-medium text-muted-foreground">Estación</h3>
                 <p className="text-lg font-medium">{evaluacion.examenNombre || "No especificado"}</p>
               </div>
               <div>
@@ -287,6 +289,9 @@ export default function ResultadosEvaluacionPage({ params }: { params: { id: str
                         </h3>
                         <p className="text-muted-foreground text-sm">
                           {pregunta.estacion_nombre || "Estación no especificada"}
+                        </p>
+                        <p className="text-muted-foreground text-sm">
+                          Puntaje: {pregunta.puntaje_maximo}
                         </p>
                       </div>
 
