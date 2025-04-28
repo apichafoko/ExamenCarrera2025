@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: `Actualizados ${updatedExams.length} exámenes a estado INACTIVO`,
+      message: `Se han actualizdo ${updatedExams.length} exámenes a estado INACTIVO`,
       updatedExams,
     }, { status: 200 });
   } catch (error) {
