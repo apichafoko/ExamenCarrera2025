@@ -1,4 +1,3 @@
-// ExamenDetail.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -25,6 +24,7 @@ export default function ExamenDetail({ id }: { id: string }) {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [isDuplicating, setIsDuplicating] = useState(false)
 
   useEffect(() => {
     const fetchExamen = async () => {
@@ -33,13 +33,13 @@ export default function ExamenDetail({ id }: { id: string }) {
         setError(null)
 
         const res = await fetch(`/api/examenes/${id}`)
-        if (!res.ok) throw new Error("No se pudo obtener el examen")
+        if (!res.ok) throw new Error("No se pudo obtener la estación")
 
         const data = await res.json()
         setExamen(data)
       } catch (error) {
-        console.error("Error cargando examen:", error)
-        setError(error instanceof Error ? error.message : "Error desconocido al cargar examen")
+        console.error("Error cargando estación:", error)
+        setError(error instanceof Error ? error.message : "Error desconocido al cargar estación")
       } finally {
         setIsLoading(false)
       }
@@ -51,17 +51,17 @@ export default function ExamenDetail({ id }: { id: string }) {
   const handleEliminarExamen = async () => {
     try {
       const res = await fetch(`/api/examenes/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Error al eliminar el examen")
+      if (!res.ok) throw new Error("Error al eliminar la estación")
 
       toast({
-        title: "Examen eliminado",
-        description: "El examen ha sido eliminado correctamente.",
+        title: "Estación eliminada",
+        description: "La estación ha sido eliminada correctamente.",
       })
       router.push("/examenes")
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al eliminar el examen",
+        description: error instanceof Error ? error.message : "Error al eliminar la estación",
         variant: "destructive",
       })
     }
@@ -78,27 +78,42 @@ export default function ExamenDetail({ id }: { id: string }) {
     }
 
     try {
+      setIsDuplicating(true)
+      console.log("Enviando solicitud para duplicar estación:", {
+        id,
+        fecha_aplicacion: selectedDate.toISOString(),
+      })
+
       const res = await fetch(`/api/examenes/${id}/duplicar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fecha_aplicacion: selectedDate.toISOString() }),
       })
 
-      if (!res.ok) throw new Error("No se pudo duplicar el examen")
+      const data = await res.json()
 
-      const nuevo = await res.json()
+      if (!res.ok) {
+        console.error("Error en la respuesta de la API:", data)
+        throw new Error(data.error || "No se pudo duplicar la estación")
+      }
+
+      console.log("Estación duplicada exitosamente:", data)
+
       toast({
-        title: "Examen duplicado",
-        description: `Examen creado para el ${format(selectedDate, "dd/MM/yyyy")}`,
+        title: "Estación duplicada",
+        description: `Estación creada para el ${format(selectedDate, "dd/MM/yyyy")}`,
       })
       setModalOpen(false)
-      router.push(`/examenes/${nuevo.id}`)
+      router.push(`/examenes/${data.id}`)
     } catch (error) {
+      console.error("Error al duplicar la estación:", error)
       toast({
         title: "Error al duplicar",
-        description: error instanceof Error ? error.message : "Error inesperado",
+        description: error instanceof Error ? error.message : "Error inesperado al duplicar la estación",
         variant: "destructive",
       })
+    } finally {
+      setIsDuplicating(false)
     }
   }
 
@@ -106,7 +121,7 @@ export default function ExamenDetail({ id }: { id: string }) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2 text-lg">Cargando información del examen...</p>
+        <p className="ml-2 text-lg">Cargando información de la estación...</p>
       </div>
     )
   }
@@ -122,7 +137,7 @@ export default function ExamenDetail({ id }: { id: string }) {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-destructive">{error || "No se pudo cargar la información del examen"}</p>
+            <p className="text-destructive">{error || "No se pudo cargar la información de la estación"}</p>
             <Button onClick={() => router.push("/examenes")} className="mt-4">
               Volver a la lista
             </Button>
@@ -153,7 +168,7 @@ export default function ExamenDetail({ id }: { id: string }) {
           </Button>
           <Button variant="destructive" onClick={handleEliminarExamen} disabled={examen.alumnos.length > 0}>
             <Trash2 className="mr-2 h-4 w-4" />
-            Eliminar Examen
+            Eliminar Estación
           </Button>
         </div>
       </div>
@@ -162,7 +177,7 @@ export default function ExamenDetail({ id }: { id: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Información General</CardTitle>
-          <CardDescription>Detalles del examen</CardDescription>
+          <CardDescription>Detalles de la estación</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -176,8 +191,8 @@ export default function ExamenDetail({ id }: { id: string }) {
             </div>
             <div className="flex items-center justify-end">
               <Button variant="outline" size="sm" className="mt-2" onClick={() => setModalOpen(true)}>
-              <Calendar className="mr-2 h-4 w-4" /> Duplicar nueva fecha
-            </Button>
+                <Calendar className="mr-2 h-4 w-4" /> Duplicar nueva fecha
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -204,9 +219,9 @@ export default function ExamenDetail({ id }: { id: string }) {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Calendar className="mr-2 h-5 w-5" />
-                Casos del Examen
+                Casos de la estación
               </CardTitle>
-              <CardDescription>{examen.estaciones?.length || 0} casos configurados para este examen</CardDescription>
+              <CardDescription>{examen.estaciones?.length || 0} casos configurados para esta estación</CardDescription>
             </CardHeader>
             <CardContent>
               {examen.estaciones && examen.estaciones.length > 0 ? (
@@ -224,7 +239,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                 </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  No hay casos configurados para este examen.
+                  No hay casos configurados para esta estación.
                 </div>
               )}
             </CardContent>
@@ -238,7 +253,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                 <Users className="mr-2 h-4 w-4" />
                 Alumnos Asignados
               </CardTitle>
-              <CardDescription>{examen.alumnos?.length || 0} alumnos asignados a este examen</CardDescription>
+              <CardDescription>{examen.alumnos?.length || 0} alumnos asignados a esta estación</CardDescription>
             </CardHeader>
             <CardContent>
               {examen.alumnos && examen.alumnos.length > 0 ? (
@@ -275,7 +290,9 @@ export default function ExamenDetail({ id }: { id: string }) {
                   </TableBody>
                 </Table>
               ) : (
-                <div className="text-center py-4 text-muted-foreground">No hay alumnos asignados a este examen.</div>
+                <div className="text-center py-4 text-muted-foreground">
+                  No hay alumnos asignados a esta estación.
+                </div>
               )}
             </CardContent>
           </Card>
@@ -289,7 +306,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                 Evaluadores Habilitados
               </CardTitle>
               <CardDescription>
-                {examen.evaluadores?.length || 0} evaluadores habilitados para tomar este examen
+                {examen.evaluadores?.length || 0} evaluadores habilitados para tomar esta estación
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -316,7 +333,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                 </Table>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  No hay evaluadores habilitados para este examen.
+                  No hay evaluadores habilitados para esta estación.
                 </div>
               )}
             </CardContent>
@@ -327,11 +344,11 @@ export default function ExamenDetail({ id }: { id: string }) {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Duplicar examen en otra fecha</DialogTitle>
+            <DialogTitle>Duplicar estación en otra fecha</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <p className="text-sm text-muted-foreground">
-              Seleccioná la nueva fecha de aplicación para el examen duplicado.
+              Seleccioná la nueva fecha de aplicación para la estación duplicada.
             </p>
             <DatePicker
               selected={selectedDate}
@@ -343,11 +360,18 @@ export default function ExamenDetail({ id }: { id: string }) {
             />
           </div>
           <DialogFooter className="pt-4">
-            <Button variant="ghost" onClick={() => setModalOpen(false)}>
+            <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isDuplicating}>
               Cancelar
             </Button>
-            <Button onClick={handleDuplicarExamen} disabled={!selectedDate}>
-              Duplicar
+            <Button onClick={handleDuplicarExamen} disabled={!selectedDate || isDuplicating}>
+              {isDuplicating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Duplicando...
+                </>
+              ) : (
+                "Duplicar"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
