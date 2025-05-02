@@ -113,24 +113,25 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
+
 // Implementar la función PUT para actualizar el examen completo
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const id = Number.parseInt(params.id)
+    const id = Number.parseInt(params.id);
     if (isNaN(id)) {
-      return NextResponse.json({ message: "ID inválido" }, { status: 400, headers: { "Cache-Control": "no-store" } })
+      return NextResponse.json({ message: "ID inválido" }, { status: 400, headers: { "Cache-Control": "no-store" } });
     }
 
-    const data = await request.json()
-    console.log("Datos recibidos para actualizar:", JSON.stringify(data, null, 2))
+    const data = await request.json();
+    console.log("Datos recibidos para actualizar:", JSON.stringify(data, null, 2));
 
     // Validar datos básicos
     if (!data.titulo || !data.fecha_aplicacion) {
-      return NextResponse.json({ message: "Faltan campos requeridos (titulo, fecha_aplicacion)" }, { status: 400 })
+      return NextResponse.json({ message: "Faltan campos requeridos (titulo, fecha_aplicacion)" }, { status: 400 });
     }
 
     // Iniciar una transacción
-    await executeQuery("BEGIN")
+    await executeQuery("BEGIN");
 
     try {
       // 1. Actualizar la información básica del examen
@@ -139,17 +140,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         SET titulo = $1, descripcion = $2, fecha_aplicacion = $3, estado = $4
         WHERE id = $5
         RETURNING *
-      `
+      `;
       const examenResult = await executeQuery(examenQuery, [
         data.titulo,
         data.descripcion || null,
         data.fecha_aplicacion,
         data.estado || "Activo",
         id,
-      ])
+      ]);
 
       if (examenResult.length === 0) {
-        throw new Error("Examen no encontrado o no se pudo actualizar")
+        throw new Error("Examen no encontrado o no se pudo actualizar");
       }
 
       // 2. Actualizar los evaluadores asignados
@@ -157,19 +158,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         // Obtener evaluadores actuales
         const evaluadoresActuales = await executeQuery(
           "SELECT evaluador_id FROM examenes_evaluadores WHERE examen_id = $1",
-          [id],
-        )
-        const evaluadoresActualesIds = evaluadoresActuales.map((e: any) => e.evaluador_id)
+          [id]
+        );
+        const evaluadoresActualesIds = evaluadoresActuales.map((e: any) => e.evaluador_id);
 
         // Identificar evaluadores a agregar o eliminar
-        const evaluadoresNuevos = data.evaluadores_ids.filter((eid: number) => !evaluadoresActualesIds.includes(eid))
-        const evaluadoresAEliminar = evaluadoresActualesIds.filter((eid: number) => !data.evaluadores_ids.includes(eid))
+        const evaluadoresNuevos = data.evaluadores_ids.filter(
+          (eid: number) => !evaluadoresActualesIds.includes(eid)
+        );
+        const evaluadoresAEliminar = evaluadoresActualesIds.filter(
+          (eid: number) => !data.evaluadores_ids.includes(eid)
+        );
 
         // Agregar nuevos evaluadores
         if (evaluadoresNuevos.length > 0) {
-          const values = evaluadoresNuevos.map((eid: number, index: number) => `($1, $${index + 2})`).join(",")
-          const query = `INSERT INTO examenes_evaluadores (examen_id, evaluador_id) VALUES ${values}`
-          await executeQuery(query, [id, ...evaluadoresNuevos])
+          const values = evaluadoresNuevos.map((eid: number, index: number) => `($1, $${index + 2})`).join(",");
+          const query = `INSERT INTO examenes_evaluadores (examen_id, evaluador_id) VALUES ${values}`;
+          await executeQuery(query, [id, ...evaluadoresNuevos]);
         }
 
         // Eliminar evaluadores no deseados
@@ -177,23 +182,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           await executeQuery("DELETE FROM examenes_evaluadores WHERE examen_id = $1 AND evaluador_id = ANY($2)", [
             id,
             evaluadoresAEliminar,
-          ])
+          ]);
         }
       }
 
       // 3. Obtener estaciones existentes
-      const estacionesExistentes = await executeQuery("SELECT id FROM estaciones WHERE examen_id = $1", [id])
-      const estacionesExistentesIds = estacionesExistentes.map((e: any) => e.id)
+      const estacionesExistentes = await executeQuery("SELECT id FROM estaciones WHERE examen_id = $1", [id]);
+      const estacionesExistentesIds = estacionesExistentes.map((e: any) => e.id);
 
       // 4. Procesar estaciones
-      const estacionesNuevasIds: number[] = []
+      const estacionesNuevasIds: number[] = [];
       if (data.estaciones && data.estaciones.length > 0) {
         for (const estacion of data.estaciones) {
-          let estacionId
+          let estacionId;
 
           // Validar datos de la estación
           if (!estacion.titulo || !estacion.duracion_minutos || estacion.orden == null) {
-            throw new Error("Faltan campos requeridos en la estación (titulo, duracion_minutos, orden)")
+            throw new Error("Faltan campos requeridos en la estación (titulo, duracion_minutos, orden)");
           }
 
           // Actualizar estación existente
@@ -203,7 +208,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
               SET titulo = $1, descripcion = $2, duracion_minutos = $3, orden = $4, activo = $5
               WHERE id = $6
               RETURNING id
-            `
+            `;
             const estacionResult = await executeQuery(estacionQuery, [
               estacion.titulo,
               estacion.descripcion || null,
@@ -211,8 +216,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
               estacion.orden,
               estacion.activo ?? true,
               estacion.id,
-            ])
-            estacionId = estacionResult[0]?.id
+            ]);
+            estacionId = estacionResult[0]?.id;
           }
           // Crear nueva estación
           else {
@@ -220,7 +225,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
               INSERT INTO estaciones (examen_id, titulo, descripcion, duracion_minutos, orden, activo)
               VALUES ($1, $2, $3, $4, $5, $6)
               RETURNING id
-            `
+            `;
             const estacionResult = await executeQuery(estacionQuery, [
               id,
               estacion.titulo,
@@ -228,42 +233,40 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
               estacion.duracion_minutos,
               estacion.orden,
               estacion.activo ?? true,
-            ])
-            estacionId = estacionResult[0]?.id
+            ]);
+            estacionId = estacionResult[0]?.id;
           }
 
           if (!estacionId) {
-            throw new Error("No se pudo crear o actualizar la estación")
+            throw new Error("No se pudo crear o actualizar la estación");
           }
-          estacionesNuevasIds.push(estacionId)
+          estacionesNuevasIds.push(estacionId);
 
           // 5. Obtener preguntas existentes para la estación
-          const preguntasExistentes = await executeQuery("SELECT id FROM preguntas WHERE estacion_id = $1", [
-            estacionId,
-          ])
-          const preguntasExistentesIds = preguntasExistentes.map((p: any) => p.id)
+          const preguntasExistentes = await executeQuery("SELECT id FROM preguntas WHERE estacion_id = $1", [estacionId]);
+          const preguntasExistentesIds = preguntasExistentes.map((p: any) => p.id);
 
           // 6. Procesar preguntas
-          const preguntasNuevasIds: number[] = []
+          const preguntasNuevasIds: number[] = [];
           if (estacion.preguntas && estacion.preguntas.length > 0) {
             for (const pregunta of estacion.preguntas) {
-              let preguntaId
+              let preguntaId;
 
               // Validar datos de la pregunta
               if (!pregunta.texto || !pregunta.tipo || pregunta.orden == null) {
-                throw new Error("Faltan campos requeridos en la pregunta (texto, tipo, orden)")
+                throw new Error("Faltan campos requeridos en la pregunta (texto, tipo, orden)");
               }
 
               // Verificar si la pregunta tiene respuestas asociadas
               if (pregunta.id && preguntasExistentesIds.includes(pregunta.id)) {
                 const respuestasCount = await executeQuery(
                   "SELECT COUNT(*) FROM respuestas_alumnos WHERE pregunta_id = $1",
-                  [pregunta.id],
-                )
-                if (Number.parseInt(respuestasCount[0].count) > 0 && pregunta.eliminado) {
+                  [pregunta.id]
+                );
+                if (parseInt(respuestasCount[0].count) > 0 && pregunta.eliminado) {
                   throw new Error(
-                    `No se puede eliminar la pregunta con ID ${pregunta.id} porque tiene respuestas asociadas`,
-                  )
+                    `No se puede eliminar la pregunta con ID ${pregunta.id} porque tiene respuestas asociadas`
+                  );
                 }
               }
 
@@ -274,7 +277,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                   SET texto = $1, tipo = $2, obligatoria = $3, orden = $4, valor_minimo = $5, valor_maximo = $6, puntaje = $7
                   WHERE id = $8
                   RETURNING id
-                `
+                `;
                 const preguntaResult = await executeQuery(preguntaQuery, [
                   pregunta.texto,
                   pregunta.tipo,
@@ -284,8 +287,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                   pregunta.valor_maximo ?? null,
                   pregunta.puntaje ?? null,
                   pregunta.id,
-                ])
-                preguntaId = preguntaResult[0]?.id
+                ]);
+                preguntaId = preguntaResult[0]?.id;
               }
               // Crear nueva pregunta
               else if (!pregunta.eliminado) {
@@ -293,7 +296,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                   INSERT INTO preguntas (estacion_id, texto, tipo, obligatoria, orden, valor_minimo, valor_maximo, puntaje)
                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                   RETURNING id
-                `
+                `;
                 const preguntaResult = await executeQuery(preguntaQuery, [
                   estacionId,
                   pregunta.texto,
@@ -303,28 +306,28 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                   pregunta.valor_minimo ?? null,
                   pregunta.valor_maximo ?? null,
                   pregunta.puntaje ?? null,
-                ])
-                preguntaId = preguntaResult[0]?.id
+                ]);
+                preguntaId = preguntaResult[0]?.id;
               }
 
               if (preguntaId) {
-                preguntasNuevasIds.push(preguntaId)
+                preguntasNuevasIds.push(preguntaId);
 
                 // 7. Procesar opciones
                 if (pregunta.opciones && pregunta.opciones.length > 0) {
                   // Obtener opciones existentes
                   const opcionesExistentes = await executeQuery("SELECT id FROM opciones WHERE pregunta_id = $1", [
                     preguntaId,
-                  ])
-                  const opcionesExistentesIds = opcionesExistentes.map((o: any) => o.id)
+                  ]);
+                  const opcionesExistentesIds = opcionesExistentes.map((o: any) => o.id);
 
-                  const opcionesNuevasIds: number[] = []
+                  const opcionesNuevasIds: number[] = [];
                   for (const opcion of pregunta.opciones) {
-                    let opcionId
+                    let opcionId;
 
                     // Validar datos de la opción
                     if (!opcion.texto || opcion.orden == null) {
-                      throw new Error("Faltan campos requeridos en la opción (texto, orden)")
+                      throw new Error("Faltan campos requeridos en la opción (texto, orden)");
                     }
 
                     // Actualizar opción existente
@@ -334,14 +337,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                         SET texto = $1, es_correcta = $2, orden = $3
                         WHERE id = $4
                         RETURNING id
-                      `
+                      `;
                       const opcionResult = await executeQuery(opcionQuery, [
                         opcion.texto,
                         opcion.es_correcta ?? false,
                         opcion.orden,
                         opcion.id,
-                      ])
-                      opcionId = opcionResult[0]?.id
+                      ]);
+                      opcionId = opcionResult[0]?.id;
                     }
                     // Crear nueva opción
                     else if (!opcion.eliminado) {
@@ -349,18 +352,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                         INSERT INTO opciones (pregunta_id, texto, es_correcta, orden)
                         VALUES ($1, $2, $3, $4)
                         RETURNING id
-                      `
+                      `;
                       const opcionResult = await executeQuery(opcionQuery, [
                         preguntaId,
                         opcion.texto,
                         opcion.es_correcta ?? false,
                         opcion.orden,
-                      ])
-                      opcionId = opcionResult[0]?.id
+                      ]);
+                      opcionId = opcionResult[0]?.id;
                     }
 
                     if (opcionId) {
-                      opcionesNuevasIds.push(opcionId)
+                      opcionesNuevasIds.push(opcionId);
                     }
                   }
 
@@ -368,10 +371,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                   const opcionesAEliminar = opcionesExistentesIds.filter(
                     (oid: number) =>
                       !opcionesNuevasIds.includes(oid) ||
-                      pregunta.opciones.some((o: any) => o.id === oid && o.eliminado),
-                  )
+                      pregunta.opciones.some((o: any) => o.id === oid && o.eliminado)
+                  );
                   if (opcionesAEliminar.length > 0) {
-                    await executeQuery("DELETE FROM opciones WHERE id = ANY($1)", [opcionesAEliminar])
+                    await executeQuery("DELETE FROM opciones WHERE id = ANY($1)", [opcionesAEliminar]);
                   }
                 }
               }
@@ -381,43 +384,28 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           // 8. Eliminar preguntas marcadas como eliminadas o no incluidas
           const preguntasAEliminar = preguntasExistentesIds.filter(
             (pid: number) =>
-              !preguntasNuevasIds.includes(pid) || estacion.preguntas.some((p: any) => p.id === pid && p.eliminado),
-          )
+              !preguntasNuevasIds.includes(pid) ||
+              estacion.preguntas.some((p: any) => p.id === pid && p.eliminado)
+          );
           if (preguntasAEliminar.length > 0) {
             // Verificar si alguna pregunta tiene respuestas asociadas
             const respuestasCount = await executeQuery(
               "SELECT COUNT(*) FROM respuestas_alumnos WHERE pregunta_id = ANY($1)",
-              [preguntasAEliminar],
-            )
-            if (Number.parseInt(respuestasCount[0].count) > 0) {
-              throw new Error("No se pueden eliminar preguntas porque tienen respuestas asociadas")
+              [preguntasAEliminar]
+            );
+            if (parseInt(respuestasCount[0].count) > 0) {
+              throw new Error("No se pueden eliminar preguntas porque tienen respuestas asociadas");
             }
-            await executeQuery("DELETE FROM preguntas WHERE id = ANY($1)", [preguntasAEliminar])
+            await executeQuery("DELETE FROM preguntas WHERE id = ANY($1)", [preguntasAEliminar]);
           }
-
-            // NUEVO: Calcular y actualizar el puntaje_maximo de la estación
-            const puntajeMaximoQuery = `
-              SELECT COALESCE(SUM(puntaje), 0) as puntaje_maximo
-              FROM preguntas
-              WHERE estacion_id = $1 AND puntaje IS NOT NULL
-            `;
-            const puntajeMaximoResult = await executeQuery(puntajeMaximoQuery, [estacionId]);
-            const puntajeMaximo = Number.parseFloat(puntajeMaximoResult[0].puntaje_maximo);
-
-            const updatePuntajeMaximoQuery = `
-              UPDATE estaciones
-              SET puntaje_maximo = $1
-              WHERE id = $2
-            `;
-            await executeQuery(updatePuntajeMaximoQuery, [puntajeMaximo, estacionId]);
         }
       }
 
       // 9. Eliminar estaciones marcadas como eliminadas o no incluidas
       const estacionesAEliminar = estacionesExistentesIds.filter(
         (eid: number) =>
-          !estacionesNuevasIds.includes(eid) || data.estaciones.some((e: any) => e.id === eid && e.eliminado),
-      )
+          !estacionesNuevasIds.includes(eid) || data.estaciones.some((e: any) => e.id === eid && e.eliminado)
+      );
       if (estacionesAEliminar.length > 0) {
         // Verificar si alguna estación tiene preguntas con respuestas asociadas
         const respuestasCount = await executeQuery(
@@ -428,30 +416,30 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           JOIN estaciones e ON p.estacion_id = e.id
           WHERE e.id = ANY($1)
         `,
-          [estacionesAEliminar],
-        )
-        if (Number.parseInt(respuestasCount[0].count) > 0) {
-          throw new Error("No se pueden eliminar estaciones porque tienen preguntas con respuestas asociadas")
+          [estacionesAEliminar]
+        );
+        if (parseInt(respuestasCount[0].count) > 0) {
+          throw new Error("No se pueden eliminar estaciones porque tienen preguntas con respuestas asociadas");
         }
-        await executeQuery("DELETE FROM estaciones WHERE id = ANY($1)", [estacionesAEliminar])
+        await executeQuery("DELETE FROM estaciones WHERE id = ANY($1)", [estacionesAEliminar]);
       }
 
       // Confirmar la transacción
-      await executeQuery("COMMIT")
+      await executeQuery("COMMIT");
 
       // Devolver el examen actualizado
-      return NextResponse.json(examenResult[0], { headers: { "Cache-Control": "no-store" } })
+      return NextResponse.json(examenResult[0], { headers: { "Cache-Control": "no-store" } });
     } catch (error) {
       // Revertir la transacción en caso de error
-      await executeQuery("ROLLBACK")
-      throw error
+      await executeQuery("ROLLBACK");
+      throw error;
     }
   } catch (error) {
-    console.error(`Error en PUT /api/examenes/${params.id}:`, error)
+    console.error(`Error en PUT /api/examenes/${params.id}:`, error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Error al actualizar el examen" },
       { status: 500, headers: { "Cache-Control": "no-store" } },
-    )
+    );
   }
 }
 

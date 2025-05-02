@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,9 +16,11 @@ import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, ChevronLeft, ChevronRight, Save, AlertCircle, CheckCircle, XCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 export default function TomarExamenPage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -31,6 +34,43 @@ export default function TomarExamenPage({ params }: { params: { id: string } }) 
   const [error, setError] = useState<string | null>(null)
   const [mostrarAlertaEstacionIncompleta, setMostrarAlertaEstacionIncompleta] = useState(false)
   const alertaRef = useRef<HTMLDivElement>(null)
+
+  // Guardar el resultado de la estación:
+
+  /*const guardarResultadoEstacion = async (estacionIndex: number) => {
+    if (!examen) return
+
+    const estacionActual = examen.estaciones[estacionIndex]
+    if (!estacionActual) return
+
+    const todasRespondidas = estacionActual.preguntas.every((pregunta) => respuestas[pregunta.id])
+    if (!todasRespondidas) {
+      return
+    }
+    const promesas = []
+    const alumnoExamenId = Number(params.id)
+
+    // Enviar los resultados de la estación al backend
+    const response = await fetch("/api/evaluador/resultados-estaciones", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        alumno_examen_id: Number(params.id),
+        estacion_id: estacionActual.id,
+        calificacion: 8, //Calcular la calificación por estacion
+        observaciones: "",
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error("Error al guardar los resultados de la estación")
+    }
+
+    console.log(``Resultado guardado de estacion ${estacionActual.id}:)
+    return ""
+  }*/
 
   // Cargar el examen
   useEffect(() => {
@@ -59,7 +99,8 @@ export default function TomarExamenPage({ params }: { params: { id: string } }) 
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || "Error al cargar el examen")
+          console.error("Error en respuesta:", errorData)
+          throw new Error(errorData.message || `Error: ${response.status}`)
         }
 
         const data = await response.json()
@@ -128,7 +169,7 @@ export default function TomarExamenPage({ params }: { params: { id: string } }) 
         setError(error instanceof Error ? error.message : "Error al cargar el examen")
         toast({
           title: "Error",
-          description: error instanceof Error ? error.message : "Error al cargar el examen",
+          description: error instanceof Error ? error.message : "Error desconocido",
           variant: "destructive",
         })
       } finally {
@@ -277,7 +318,6 @@ export default function TomarExamenPage({ params }: { params: { id: string } }) 
         description: "No se pudo guardar la respuesta. Intente nuevamente.",
         variant: "destructive",
       })
-      throw error
     } finally {
       setSaving(false)
     }
@@ -775,36 +815,32 @@ export default function TomarExamenPage({ params }: { params: { id: string } }) 
               <CardTitle>Información del examen</CardTitle>
               <CardDescription>Detalles sobre el examen que está evaluando</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-medium">Título</h3>
-                <p>{examen.examen_titulo}</p>
-              </div>
-
-              <div>
-                <h3 className="font-medium">Descripción</h3>
-                <p>{examen.examen_descripcion || "Sin descripción"}</p>
-              </div>
-
-              <div>
-                <h3 className="font-medium">Estado</h3>
-                <p>{examen.estado}</p>
-              </div>
-
-              <div>
-                <h3 className="font-medium">ID del Alumno-Examen</h3>
-                <p>{params.id}</p>
-              </div>
-
-              <div>
-                <h3 className="font-medium">Estaciones</h3>
-                <ul className="list-inside list-disc">
-                  {examen.estaciones.map((estacion: any, index: number) => (
-                    <li key={estacion.id}>
-                      {estacion.titulo} ({estacion.preguntas.length} preguntas)
-                    </li>
-                  ))}
-                </ul>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Alumno</p>
+                  <p className="font-medium">
+                    {examen.alumno_nombre} {examen.alumno_apellido}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Examen</p>
+                  <p className="font-medium">{examen.examen_titulo}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Estado</p>
+                  <Badge variant="outline" className="mt-1">
+                    {examen.estado}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Fecha de inicio</p>
+                  <p className="font-medium">{new Date(examen.fecha_inicio).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Fecha de finalización</p>
+                  <p className="font-medium">{new Date(examen.fecha_fin).toLocaleString()}</p>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       `${examen.titulo} (${formatDate(newDate)})`,
       examen.descripcion || null,
       newDate.toISOString(),
-      examen.estado,
+      true,
     ]);
     const newExamenId = newExamenResult[0].id;
 

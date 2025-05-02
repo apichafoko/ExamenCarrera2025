@@ -61,7 +61,6 @@
     "@neondatabase/serverless": "latest",
     "@jest/globals": "latest",
     "bcryptjs": "latest",
-    "react-datepicker": "latest",
     "jose": "latest"
   },
   "devDependencies": {

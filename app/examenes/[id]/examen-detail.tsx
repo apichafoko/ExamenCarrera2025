@@ -7,13 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Edit, ArrowLeft, Calendar, ListChecks, Users, UserCheck, Loader2, Trash2 } from "lucide-react"
+import { Edit, ArrowLeft, Calendar, ListChecks, Users, UserCheck, Loader2, Trash2, HelpCircle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
-import { format, isBefore } from "date-fns"
 
 export default function ExamenDetail({ id }: { id: string }) {
   const router = useRouter()
@@ -22,9 +18,14 @@ export default function ExamenDetail({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [isDuplicating, setIsDuplicating] = useState(false)
+  // Definir los tipos de pregunta para la vista previa
+  const tiposPregunta = [
+    { value: "texto_libre", label: "Texto Libre" },
+    { value: "opcion_unica", label: "Una opción correcta (radio)" },
+    { value: "opcion_multiple", label: "Varias opciones correctas (checkbox)" },
+    { value: "listado", label: "Listado" },
+    { value: "escala_numerica", label: "Escala numérica" },
+  ]
 
   useEffect(() => {
     const fetchExamen = async () => {
@@ -33,87 +34,53 @@ export default function ExamenDetail({ id }: { id: string }) {
         setError(null)
 
         const res = await fetch(`/api/examenes/${id}`)
-        if (!res.ok) throw new Error("No se pudo obtener la estación")
+        if (!res.ok) throw new Error("No se pudo obtener el examen")
 
         const data = await res.json()
         setExamen(data)
       } catch (error) {
-        console.error("Error cargando estación:", error)
-        setError(error instanceof Error ? error.message : "Error desconocido al cargar estación")
+        console.error("Error cargando examen:", error)
+        setError(error instanceof Error ? error.message : "Error desconocido al cargar examen")
       } finally {
         setIsLoading(false)
       }
     }
 
-    if (id) fetchExamen()
+    if (id) {
+      fetchExamen()
+    }
   }, [id])
 
   const handleEliminarExamen = async () => {
     try {
       const res = await fetch(`/api/examenes/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Error al eliminar la estación")
+      if (!res.ok) throw new Error("Error al eliminar el examen")
 
       toast({
-        title: "Estación eliminada",
-        description: "La estación ha sido eliminada correctamente.",
+        title: "Examen eliminado",
+        description: "El examen ha sido eliminado correctamente.",
       })
       router.push("/examenes")
     } catch (error) {
+      console.error("Error eliminando examen:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al eliminar la estación",
+        description: error instanceof Error ? error.message : "Error al eliminar el examen",
         variant: "destructive",
       })
     }
   }
 
-  const handleDuplicarExamen = async () => {
-    if (!selectedDate || isBefore(selectedDate, new Date())) {
-      toast({
-        title: "Fecha inválida",
-        description: "La fecha debe ser futura.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      setIsDuplicating(true)
-      console.log("Enviando solicitud para duplicar estación:", {
-        id,
-        fecha_aplicacion: selectedDate.toISOString(),
-      })
-
-      const res = await fetch(`/api/examenes/${id}/duplicar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fecha_aplicacion: selectedDate.toISOString() }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        console.error("Error en la respuesta de la API:", data)
-        throw new Error(data.error || "No se pudo duplicar la estación")
-      }
-
-      console.log("Estación duplicada exitosamente:", data)
-
-      toast({
-        title: "Estación duplicada",
-        description: `Estación creada para el ${format(selectedDate, "dd/MM/yyyy")}`,
-      })
-      setModalOpen(false)
-      router.push(`/examenes/${data.id}`)
-    } catch (error) {
-      console.error("Error al duplicar la estación:", error)
-      toast({
-        title: "Error al duplicar",
-        description: error instanceof Error ? error.message : "Error inesperado al duplicar la estación",
-        variant: "destructive",
-      })
-    } finally {
-      setIsDuplicating(false)
+  // Función para obtener el badge de estado
+  const getStatusBadge = (status: string) => {
+    if (!status) return <Badge>Desconocido</Badge>
+    switch (status.toLowerCase()) {
+      case "activo":
+        return <Badge className="bg-green-500">Activo</Badge>
+      case "inactivo":
+        return <Badge className="bg-yellow-500">Inactivo</Badge>
+      default:
+        return <Badge>{status}</Badge>
     }
   }
 
@@ -121,7 +88,7 @@ export default function ExamenDetail({ id }: { id: string }) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2 text-lg">Cargando información de la estación...</p>
+        <p className="ml-2 text-lg">Cargando información del examen...</p>
       </div>
     )
   }
@@ -137,7 +104,7 @@ export default function ExamenDetail({ id }: { id: string }) {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-destructive">{error || "No se pudo cargar la información de la estación"}</p>
+            <p className="text-destructive">{error || "No se pudo cargar la información del examen"}</p>
             <Button onClick={() => router.push("/examenes")} className="mt-4">
               Volver a la lista
             </Button>
@@ -168,7 +135,7 @@ export default function ExamenDetail({ id }: { id: string }) {
           </Button>
           <Button variant="destructive" onClick={handleEliminarExamen} disabled={examen.alumnos.length > 0}>
             <Trash2 className="mr-2 h-4 w-4" />
-            Eliminar Estación
+            Eliminar Examen
           </Button>
         </div>
       </div>
@@ -177,29 +144,25 @@ export default function ExamenDetail({ id }: { id: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Información General</CardTitle>
-          <CardDescription>Detalles de la estación</CardDescription>
+          <CardDescription>Detalles del examen</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 className="font-medium">Descripción</h3>
               <p className="text-muted-foreground">{examen.descripcion || "Sin descripción"}</p>
             </div>
             <div>
               <h3 className="font-medium">Estado</h3>
-              <Badge variant={examen.estado === "Completado" ? "success" : "secondary"}>{examen.estado}</Badge>
-            </div>
-            <div className="flex items-center justify-end">
-              <Button variant="outline" size="sm" className="mt-2" onClick={() => setModalOpen(true)}>
-                <Calendar className="mr-2 h-4 w-4" /> Duplicar nueva fecha
-              </Button>
+              {getStatusBadge(examen.estado)}
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Tabs: Estaciones, Alumnos, Evaluadores, Vista Previa */}
       <Tabs defaultValue="estaciones" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="estaciones" className="flex items-center">
             <ListChecks className="mr-2 h-4 w-4" />
             Casos
@@ -212,6 +175,10 @@ export default function ExamenDetail({ id }: { id: string }) {
             <UserCheck className="mr-2 h-4 w-4" />
             Evaluadores
           </TabsTrigger>
+          <TabsTrigger value="vista-previa" className="flex items-center">
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Vista Previa
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="estaciones" className="space-y-4 mt-4">
@@ -219,9 +186,11 @@ export default function ExamenDetail({ id }: { id: string }) {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Calendar className="mr-2 h-5 w-5" />
-                Casos de la estación
+                Casos del Examen
               </CardTitle>
-              <CardDescription>{examen.estaciones?.length || 0} casos configurados para esta estación</CardDescription>
+              <CardDescription>
+                {examen.estaciones?.length || 0} casos configurados para este examen
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {examen.estaciones && examen.estaciones.length > 0 ? (
@@ -239,7 +208,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                 </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  No hay casos configurados para esta estación.
+                  No hay casos configurados para este examen.
                 </div>
               )}
             </CardContent>
@@ -250,10 +219,10 @@ export default function ExamenDetail({ id }: { id: string }) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Users className="mr-2 h-4 w-4" />
+                <Users className="mr-2 h-5 w-5" />
                 Alumnos Asignados
               </CardTitle>
-              <CardDescription>{examen.alumnos?.length || 0} alumnos asignados a esta estación</CardDescription>
+              <CardDescription>{examen.alumnos?.length || 0} alumnos asignados a este examen</CardDescription>
             </CardHeader>
             <CardContent>
               {examen.alumnos && examen.alumnos.length > 0 ? (
@@ -278,8 +247,8 @@ export default function ExamenDetail({ id }: { id: string }) {
                               alumno.estado_asignacion === "Completado"
                                 ? "success"
                                 : alumno.estado_asignacion === "En progreso"
-                                ? "warning"
-                                : "secondary"
+                                  ? "warning"
+                                  : "secondary"
                             }
                           >
                             {alumno.estado_asignacion || "Pendiente"}
@@ -290,9 +259,7 @@ export default function ExamenDetail({ id }: { id: string }) {
                   </TableBody>
                 </Table>
               ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  No hay alumnos asignados a esta estación.
-                </div>
+                <div className="text-center py-4 text-muted-foreground">No hay alumnos asignados a este examen.</div>
               )}
             </CardContent>
           </Card>
@@ -302,11 +269,11 @@ export default function ExamenDetail({ id }: { id: string }) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <UserCheck className="mr-2 h-4 w-4" />
+                <UserCheck className="mr-2 h-5 w-5" />
                 Evaluadores Habilitados
               </CardTitle>
               <CardDescription>
-                {examen.evaluadores?.length || 0} evaluadores habilitados para tomar esta estación
+                {examen.evaluadores?.length || 0} evaluadores habilitados para tomar este examen
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -333,49 +300,117 @@ export default function ExamenDetail({ id }: { id: string }) {
                 </Table>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  No hay evaluadores habilitados para esta estación.
+                  No hay evaluadores habilitados para este examen.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="vista-previa" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{examen.titulo || "Nombre del Examen"}</CardTitle>
+              <CardDescription>
+                Fecha:{" "}
+                {examen.fecha_aplicacion ? new Date(examen.fecha_aplicacion).toLocaleDateString() : "No definida"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {examen.estaciones && examen.estaciones.length > 0 ? (
+                examen.estaciones
+                  .filter((estacion: any) => estacion.activo)
+                  .map((estacion: any, estacionIndex: number) => (
+                    <div key={estacion.id} className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">
+                        {estacion.titulo || `Estación ${estacionIndex + 1}`}
+                      </h3>
+                      <div className="space-y-4 pl-4">
+                        {estacion.preguntas && estacion.preguntas.length > 0 ? (
+                          estacion.preguntas.map((pregunta: any, preguntaIndex: number) => (
+                            <div key={pregunta.id} className="space-y-1">
+                              <p className="font-medium">
+                                {preguntaIndex + 1}. {pregunta.texto || "Descripción de la pregunta"}
+                              </p>
+                              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                                {pregunta.categorias && <span>Categorías: {pregunta.categorias}</span>}
+                                <span>•</span>
+                                <span>
+                                  Tipo: {tiposPregunta.find((t) => t.value === pregunta.tipo)?.label || pregunta.tipo}
+                                </span>
+                                <span>•</span>
+                                <span>Puntaje: {pregunta.puntaje || 1}</span>
+                              </div>
+
+                              {pregunta.tipo === "opcion_unica" && pregunta.opciones && (
+                                <div className="mt-2 pl-4 space-y-1">
+                                  {pregunta.opciones.map((opcion: any, opcionIndex: number) => (
+                                    <div key={opcion.id} className="flex items-center gap-2">
+                                      <div
+                                        className={`w-4 h-4 rounded-full border ${opcion.correcta ? "bg-primary border-primary" : "border-gray-300"}`}
+                                      ></div>
+                                      <span>{opcion.texto || `Opción ${opcionIndex + 1}`}</span>
+                                      {opcion.correcta && <span className="text-xs text-green-600">(Correcta)</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {pregunta.tipo === "opcion_multiple" && pregunta.opciones && (
+                                <div className="mt-2 pl-4 space-y-1">
+                                  {pregunta.opciones.map((opcion: any, opcionIndex: number) => (
+                                    <div key={opcion.id} className="flex items-center gap-2">
+                                      <div
+                                        className={`w-4 h-4 rounded border ${opcion.correcta ? "bg-primary border-primary" : "border-gray-300"}`}
+                                      ></div>
+                                      <span>{opcion.texto || `Opción ${opcionIndex + 1}`}</span>
+                                      {opcion.correcta && <span className="text-xs text-green-600">(Correcta)</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {pregunta.tipo === "listado" && pregunta.opciones && (
+                                <div className="mt-2 pl-4 space-y-1">
+                                  <ol className="list-decimal pl-4">
+                                    {pregunta.opciones.map((opcion: any, opcionIndex: number) => (
+                                      <li key={opcion.id}>{opcion.texto || `Elemento ${opcionIndex + 1}`}</li>
+                                    ))}
+                                  </ol>
+                                </div>
+                              )}
+
+                              {pregunta.tipo === "escala_numerica" && (
+                                <div className="mt-2 pl-4">
+                                  <p className="text-sm">
+                                    Escala del {pregunta.valor_minimo || 1} al {pregunta.valor_maximo || 10}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-muted-foreground">No hay preguntas en esta estación.</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No hay casos configurados para este examen.
+                </div>
+              )}
+              {examen.estaciones && examen.estaciones.some((estacion: any) => !estacion.activo) && (
+                <div className="mt-4 p-4 bg-gray-100 rounded-md">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Nota: Los casos inactivos no se muestran en la vista previa y no aparecerán durante la evaluación.
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Duplicar estación en otra fecha</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">
-              Seleccioná la nueva fecha de aplicación para la estación duplicada.
-            </p>
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              minDate={new Date()}
-              dateFormat="dd/MM/yyyy"
-              className="w-full border border-input rounded-md p-2 text-sm"
-              placeholderText="Seleccionar fecha"
-            />
-          </div>
-          <DialogFooter className="pt-4">
-            <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isDuplicating}>
-              Cancelar
-            </Button>
-            <Button onClick={handleDuplicarExamen} disabled={!selectedDate || isDuplicating}>
-              {isDuplicating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Duplicando...
-                </>
-              ) : (
-                "Duplicar"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

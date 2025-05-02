@@ -16,11 +16,13 @@ import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/context/auth-context"
 import { Slider } from "@/components/ui/slider"
 import { Check } from "lucide-react"
-// Importar el logger
 import logger from "@/lib/logger"
+import { use } from "react"
 
 // Componente para mostrar el detalle de un examen asignado a un alumno
-export default function TomarExamenDetallePage({ params }: { params: { id: string } }) {
+export default function TomarExamenDetallePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params); // Unwrap the params Promise
+  const id = resolvedParams.id; // Access id safely
   const router = useRouter()
   const { toast } = useToast()
   const { user } = useAuth()
@@ -35,16 +37,10 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   const [loadingRetry, setLoadingRetry] = useState(false)
   const [cambiosPendientes, setCambiosPendientes] = useState<{ [key: string]: boolean }>({})
   const contentRef = useRef<HTMLDivElement>(null)
-
-  // Estado para las observaciones de estaciones y del examen
   const [observacionesEstacion, setObservacionesEstacion] = useState<{ [key: string]: string }>({})
   const [observacionesExamen, setObservacionesExamen] = useState<string>("")
-
-  // Estado para la barra de progreso
   const [progresoGuardado, setProgresoGuardado] = useState(0)
   const [mostrarProgreso, setMostrarProgreso] = useState(false)
-
-  // Estado para mostrar alerta de estación incompleta
   const [mostrarAlertaEstacionIncompleta, setMostrarAlertaEstacionIncompleta] = useState(false)
   const [estacionIncompleta, setEstacionIncompleta] = useState<number | null>(null)
   const [preguntasSinResponder, setPreguntasSinResponder] = useState<number[]>([])
@@ -57,7 +53,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         setLoading(true)
         setError(null)
 
-        logger.log(`Cargando examen con ID de asignación: ${params.id}`)
+        logger.log(`Cargando examen con ID de asignación: ${id}`)
 
         // Primero obtenemos el evaluador asociado al usuario por su email
         const evaluadorResponse = await fetch(`/api/evaluadores/by-id?userId=${user.id}`)
@@ -72,8 +68,8 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
           }
         }
 
-        // Obtener el examen asignado
-        const response = await fetch(`/api/evaluador/examenes/${params.id}`, {
+        // Obtener el examen asignado, filtrando por estado 'ACTIVO'
+        const response = await fetch(`/api/evaluador/examenes/${id}`, {
           cache: "no-store",
           headers: {
             "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -168,7 +164,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
     if (user) {
       cargarExamen()
     }
-  }, [params.id, user])
+  }, [id, user])
 
   // Detectar cambios en las respuestas para actualizar el estado de cambios pendientes
   useEffect(() => {
@@ -211,7 +207,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
   const iniciarExamen = async () => {
     try {
       logger.log("Iniciando examen...")
-      const response = await fetch(`/api/evaluador/examenes/${params.id}`, {
+      const response = await fetch(`/api/evaluador/examenes/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -240,10 +236,10 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       logger.log("Examen iniciado:", data)
       setExamen((prev: any) => ({ ...prev, estado: data.estado, fecha_inicio: data.fecha_inicio }))
 
-      //toast({
-      //title: "Examen iniciado",
-      //description: "El examen ha sido iniciado correctamente.",
-      //})
+      toast({
+        title: "Examen iniciado",
+        description: "El examen ha sido iniciado correctamente.",
+      })
     } catch (error) {
       logger.error("Error al iniciar el examen:", error)
       toast({
@@ -268,7 +264,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
       setProgresoGuardado(30)
 
       // Obtener los resultados de las estaciones
-      const responseResultados = await fetch(`/api/evaluador/resultados-estaciones?alumnoExamenId=${params.id}`)
+      const responseResultados = await fetch(`/api/evaluador/resultados-estaciones?alumnoExamenId=${id}`)
       if (responseResultados.ok) {
         const resultadosEstaciones = await responseResultados.json()
 
@@ -298,7 +294,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       setProgresoGuardado(70)
 
-      const response = await fetch(`/api/evaluador/examenes/${params.id}`, {
+      const response = await fetch(`/api/evaluador/examenes/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -453,7 +449,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
         // Solo guardar si hay cambios
         if (respuestaActual !== undefined && respuestaActual !== respuestaOriginal) {
           respuestasAGuardar.push({
-            alumno_examen_id: Number(params.id),
+            alumno_examen_id: Number(id),
             pregunta_id: pregunta.id,
             respuesta_texto: respuestaActual,
           })
@@ -632,7 +628,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       // Preparar el objeto de resultado
       const resultado = {
-        alumno_examen_id: Number(params.id),
+        alumno_examen_id: Number(id),
         estacion_id: estacion.id,
         calificacion: puntajeTotal,
         observaciones: observaciones,
@@ -790,7 +786,7 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
   // Modificar la función guardarYFinalizarExamen para mejorar el manejo de errores
   const guardarYFinalizarExamen = async (estacionIndex: number) => {
-   // Verificar si todas las preguntas están respondidas
+    // Verificar si todas las preguntas están respondidas
     if (!verificarEstacionCompleta(estacionIndex)) {
       setMostrarAlertaEstacionIncompleta(true)
 
@@ -801,14 +797,14 @@ export default function TomarExamenDetallePage({ params }: { params: { id: strin
 
       return
     }
-   
+
     try {
       setGuardando(true)
       setMostrarProgreso(true)
       setProgresoGuardado(10)
 
       const estacionActual = examen.estaciones[estacionIndex]
-      const alumnoExamenId = Number(params.id)
+      const alumnoExamenId = Number(id)
 
       // Preparar respuestas
       const respuestasAGuardar = estacionActual.preguntas.map((pregunta: any) => {

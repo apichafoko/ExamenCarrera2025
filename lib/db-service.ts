@@ -273,6 +273,15 @@ ORDER BY e.apellido, e.nombre;`
 
         usuarioCreado = true
         console.log(`Usuario creado para el evaluador ${email} con ID ${usuarioResult[0].id}`)
+      
+        // 5. Actualizar el evaluador con el ID del usuario
+        const updateEvaluadorQuery = `
+        UPDATE evaluadores
+        SET usuario_id = $1
+        WHERE id = $2
+        `;
+        await executeQuery(updateEvaluadorQuery, [nuevoUsuarioId, nuevoEvaluador.id]);
+        console.log(`Evaluador con ID ${nuevoEvaluador.id} actualizado con usuario_id ${nuevoUsuarioId}`);
       }
 
       // 5. Confirmar transacción

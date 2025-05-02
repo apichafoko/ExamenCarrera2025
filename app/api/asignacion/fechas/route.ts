@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       FROM 
         examenes
       WHERE
-        fecha_aplicacion IS NOT NULL
+        fecha_aplicacion IS NOT NULL AND estado = 'ACTIVO'
       GROUP BY 
         TO_CHAR(fecha_aplicacion, 'YYYY-MM-DD')
       ORDER BY 

@@ -92,13 +92,24 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
           return
         }
 
+        // Normalizar el valor de estado
+        let normalizedEstado = "Activo"; // Valor predeterminado
+        if (examenData.estado) {
+          const estadoLower = examenData.estado.toLowerCase();
+          if (estadoLower === "activo") {
+            normalizedEstado = "Activo";
+          } else if (estadoLower === "inactivo") {
+            normalizedEstado = "Inactivo";
+          }
+        }
+
         // Asegurarse de que existan las propiedades necesarias
         const examenFormateado = {
           id: examenData.id,
           titulo: examenData.titulo || "",
           descripcion: examenData.descripcion || "",
           fecha_aplicacion: examenData.fecha_aplicacion || "",
-          estado: examenData.estado || "",
+          estado: normalizedEstado,
           estaciones: examenData.estaciones || [],
           evaluadores: examenData.evaluadores || [],
         }
@@ -506,7 +517,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
       titulo: examen.titulo || "",
       descripcion: examen.descripcion || "",
       fecha_aplicacion: examen.fecha_aplicacion || "",
-      estado: examen.estado || "",
+      estado: examen.estado || "Activo", // Asegurarse de incluir el estado
       evaluadores_ids: selectedEvaluadores,
       estaciones: examen.estaciones.map((estacion: any) => {
         const preguntasProcesadas = estacion.preguntas.map((pregunta: any) => {
@@ -922,6 +933,21 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
                     value={examen.fecha_aplicacion ? new Date(examen.fecha_aplicacion).toISOString().split("T")[0] : ""}
                     onChange={(e) => setExamen({ ...examen, fecha_aplicacion: e.target.value })}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="estado">Estado</Label>
+                  <Select
+                    value={examen.estado}
+                    onValueChange={(value) => setExamen({ ...examen, estado: value })}
+                  >
+                    <SelectTrigger id="estado">
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Activo">Activo</SelectItem>
+                      <SelectItem value="Inactivo">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="descripcion">Descripción</Label>

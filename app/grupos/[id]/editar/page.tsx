@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Loader2, ArrowRightCircle, ArrowLeftCircle, Users } from "lucide-react"
+import { ArrowLeft, Save, Loader2, ArrowRightCircle, ArrowLeftCircle, Users, Search } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
@@ -25,6 +25,8 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
   const [todosLosAlumnos, setTodosLosAlumnos] = useState<any[]>([])
   const [alumnosAsignados, setAlumnosAsignados] = useState<any[]>([])
   const [alumnosNoAsignados, setAlumnosNoAsignados] = useState<any[]>([])
+  const [searchTermNoAsignados, setSearchTermNoAsignados] = useState("") // Nuevo estado para búsqueda de no asignados
+  const [searchTermAsignados, setSearchTermAsignados] = useState("") // Nuevo estado para búsqueda de asignados
 
   const id = Number.parseInt(params.id)
 
@@ -52,11 +54,25 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
           activo: grupoData.activo !== undefined ? grupoData.activo : true,
         })
 
-        setTodosLosAlumnos(alumnosData)
-        setAlumnosAsignados(alumnosGrupo)
+        // Ordenar todos los alumnos alfabéticamente por nombre y luego por apellido
+        const alumnosOrdenados = alumnosData.sort((a: any, b: any) => {
+          const nombreComparison = a.nombre.localeCompare(b.nombre);
+          if (nombreComparison !== 0) return nombreComparison;
+          return a.apellido.localeCompare(b.apellido);
+        })
 
-        const alumnosIds = new Set(alumnosGrupo.map((a: any) => a.id))
-        const noAsignados = alumnosData.filter((alumno: any) => !alumnosIds.has(alumno.id))
+        // Ordenar alumnos asignados alfabéticamente
+        const alumnosGrupoOrdenados = alumnosGrupo.sort((a: any, b: any) => {
+          const nombreComparison = a.nombre.localeCompare(b.nombre);
+          if (nombreComparison !== 0) return nombreComparison;
+          return a.apellido.localeCompare(b.apellido);
+        })
+
+        setTodosLosAlumnos(alumnosOrdenados)
+        setAlumnosAsignados(alumnosGrupoOrdenados)
+
+        const alumnosIds = new Set(alumnosGrupoOrdenados.map((a: any) => a.id))
+        const noAsignados = alumnosOrdenados.filter((alumno: any) => !alumnosIds.has(alumno.id))
         setAlumnosNoAsignados(noAsignados)
       } catch (error) {
         console.error("Error cargando datos:", error)
@@ -74,14 +90,44 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
   }, [id, toast])
 
   const asignarAlumno = (alumno: any) => {
-    setAlumnosAsignados([...alumnosAsignados, alumno])
+    const nuevosAsignados = [...alumnosAsignados, alumno].sort((a: any, b: any) => {
+      const nombreComparison = a.nombre.localeCompare(b.nombre);
+      if (nombreComparison !== 0) return nombreComparison;
+      return a.apellido.localeCompare(b.apellido);
+    })
+    setAlumnosAsignados(nuevosAsignados)
     setAlumnosNoAsignados(alumnosNoAsignados.filter((a) => a.id !== alumno.id))
   }
 
   const desasignarAlumno = (alumno: any) => {
-    setAlumnosNoAsignados([...alumnosNoAsignados, alumno])
+    const nuevosNoAsignados = [...alumnosNoAsignados, alumno].sort((a: any, b: any) => {
+      const nombreComparison = a.nombre.localeCompare(b.nombre);
+      if (nombreComparison !== 0) return nombreComparison;
+      return a.apellido.localeCompare(b.apellido);
+    })
+    setAlumnosNoAsignados(nuevosNoAsignados)
     setAlumnosAsignados(alumnosAsignados.filter((a) => a.id !== alumno.id))
   }
+
+  // Filtrar alumnos no asignados según el término de búsqueda
+  const filteredAlumnosNoAsignados = alumnosNoAsignados.filter((alumno) => {
+    const searchLower = searchTermNoAsignados.toLowerCase();
+    return (
+      alumno.nombre.toLowerCase().includes(searchLower) ||
+      alumno.apellido.toLowerCase().includes(searchLower) ||
+      alumno.email.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Filtrar alumnos asignados según el término de búsqueda
+  const filteredAlumnosAsignados = alumnosAsignados.filter((alumno) => {
+    const searchLower = searchTermAsignados.toLowerCase();
+    return (
+      alumno.nombre.toLowerCase().includes(searchLower) ||
+      alumno.apellido.toLowerCase().includes(searchLower) ||
+      alumno.email.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleGuardar = async () => {
     if (!grupo.nombre) {
@@ -225,12 +271,24 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
               {/* Columna de alumnos no asignados */}
               <div className="border rounded-md">
                 <div className="bg-muted p-2 rounded-t-md">
-                  <h3 className="font-medium">Alumnos disponibles ({alumnosNoAsignados.length})</h3>
+                  <h3 className="font-medium">Alumnos disponibles ({filteredAlumnosNoAsignados.length})</h3>
+                </div>
+                <div className="p-2">
+                  <div className="relative mb-2">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Buscar alumnos..."
+                      className="pl-8"
+                      value={searchTermNoAsignados}
+                      onChange={(e) => setSearchTermNoAsignados(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <ScrollArea className="h-[300px] p-2">
                   <div className="space-y-1">
-                    {alumnosNoAsignados.length > 0 ? (
-                      alumnosNoAsignados.map((alumno) => (
+                    {filteredAlumnosNoAsignados.length > 0 ? (
+                      filteredAlumnosNoAsignados.map((alumno) => (
                         <div
                           key={alumno.id}
                           className="flex items-center justify-between p-2 hover:bg-muted rounded-md"
@@ -249,7 +307,11 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground p-2">No hay alumnos disponibles</p>
+                      <p className="text-sm text-muted-foreground p-2">
+                        {searchTermNoAsignados
+                          ? "No se encontraron alumnos que coincidan con la búsqueda"
+                          : "No hay alumnos disponibles"}
+                      </p>
                     )}
                   </div>
                 </ScrollArea>
@@ -258,12 +320,24 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
               {/* Columna de alumnos asignados */}
               <div className="border rounded-md">
                 <div className="bg-secondary p-2 rounded-t-md">
-                  <h3 className="font-medium">Alumnos asignados ({alumnosAsignados.length})</h3>
+                  <h3 className="font-medium">Alumnos asignados ({filteredAlumnosAsignados.length})</h3>
+                </div>
+                <div className="p-2">
+                  <div className="relative mb-2">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Buscar alumnos..."
+                      className="pl-8"
+                      value={searchTermAsignados}
+                      onChange={(e) => setSearchTermAsignados(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <ScrollArea className="h-[300px] p-2">
                   <div className="space-y-1">
-                    {alumnosAsignados.length > 0 ? (
-                      alumnosAsignados.map((alumno) => (
+                    {filteredAlumnosAsignados.length > 0 ? (
+                      filteredAlumnosAsignados.map((alumno) => (
                         <div
                           key={alumno.id}
                           className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded-md"
@@ -282,7 +356,11 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground p-2">No hay alumnos asignados</p>
+                      <p className="text-sm text-muted-foreground p-2">
+                        {searchTermAsignados
+                          ? "No se encontraron alumnos que coincidan con la búsqueda"
+                          : "No hay alumnos asignados"}
+                      </p>
                     )}
                   </div>
                 </ScrollArea>

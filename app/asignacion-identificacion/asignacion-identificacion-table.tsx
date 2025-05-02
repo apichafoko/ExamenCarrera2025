@@ -68,6 +68,13 @@ export function AsignacionIdentificacionTable({
     return nombreMatch || apellidoMatch || nombreCompletoMatch || documentoMatch || identificacionMatch
   })
 
+  // Ordenar los alumnos filtrados por apellido
+  const sortedAlumnos = [...filteredAlumnos].sort((a, b) => {
+    const apellidoA = a.apellido != null ? String(a.apellido).toLowerCase() : ""
+    const apellidoB = b.apellido != null ? String(b.apellido).toLowerCase() : ""
+    return apellidoA.localeCompare(apellidoB)
+  })
+
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
@@ -92,8 +99,8 @@ export function AsignacionIdentificacionTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
               <TableHead>Apellido</TableHead>
+              <TableHead>Nombre</TableHead>
               <TableHead>Documento</TableHead>
               <TableHead>Número de Identificación</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -120,7 +127,7 @@ export function AsignacionIdentificacionTable({
                   </TableCell>
                 </TableRow>
               ))
-            ) : filteredAlumnos.length === 0 ? (
+            ) : sortedAlumnos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
                   {searchTerm
@@ -129,10 +136,10 @@ export function AsignacionIdentificacionTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAlumnos.map((alumno) => (
+              sortedAlumnos.map((alumno) => (
                 <TableRow key={alumno.id}>
-                  <TableCell>{alumno.nombre || ""}</TableCell>
                   <TableCell>{alumno.apellido || ""}</TableCell>
+                  <TableCell>{alumno.nombre || ""}</TableCell>
                   <TableCell>{alumno.documento || ""}</TableCell>
                   <TableCell>
                     {alumno.numero_identificacion || <span className="text-muted-foreground italic">No asignado</span>}
