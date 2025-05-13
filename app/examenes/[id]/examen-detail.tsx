@@ -244,14 +244,14 @@ export default function ExamenDetail({ id }: { id: string }) {
                         <TableCell>
                           <Badge
                             variant={
-                              alumno.estado_asignacion === "Completado"
+                              alumno.estado === "Completado"
                                 ? "success"
-                                : alumno.estado_asignacion === "En progreso"
+                                : alumno.estado === "En progreso"
                                   ? "warning"
                                   : "secondary"
                             }
                           >
-                            {alumno.estado_asignacion || "Pendiente"}
+                            {alumno.estado || "Pendiente"}
                           </Badge>
                         </TableCell>
                       </TableRow>

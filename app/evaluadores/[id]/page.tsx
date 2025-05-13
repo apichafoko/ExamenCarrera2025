@@ -3,80 +3,25 @@
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Edit, User, Mail, Award, ClipboardCheck } from "lucide-react"
+import { ArrowLeft, Edit, User, Mail, Award, ClipboardCheck, Loader2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
+import Link from "next/link"
 import { formatDate } from "@/lib/utils"
+import { use } from "react"
+import logger from "@/lib/logger"
 
-export default function DetalleEvaluadorPage({ params }: { params: { id: string } }) {
+export default function DetalleEvaluadorPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
-  const id = Number.parseInt(params.id)
+  // Unwrap params using React.use
+  const { id: paramId } = use(params)
+  const id = Number.parseInt(paramId)
   const [evaluador, setEvaluador] = useState<any>(null)
   const [examenesEvaluador, setExamenesEvaluador] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchEvaluador = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        // Obtener datos del evaluador
-        const response = await fetch(`/api/evaluadores/${id}`, {
-          method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-          },
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || `Error: ${response.status}`)
-        }
-
-        const data = await response.json()
-        setEvaluador(data)
-
-        // Obtener exámenes habilitados para este evaluador
-        try {
-          const examenesResponse = await fetch(`/api/evaluadores/${id}/examenes`, {
-            method: "GET",
-            headers: {
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-            },
-          })
-
-          if (examenesResponse.ok) {
-            const examenesData = await examenesResponse.json()
-            setExamenesEvaluador(examenesData)
-          } else {
-            console.error("Error al obtener exámenes del evaluador")
-            setExamenesEvaluador([])
-          }
-        } catch (error) {
-          console.error("Error al obtener exámenes del evaluador:", error)
-          setExamenesEvaluador([])
-        }
-      } catch (error) {
-        console.error("Error cargando evaluador:", error)
-        setError(error instanceof Error ? error.message : "Error desconocido al cargar evaluador")
-        toast({
-          title: "Error al cargar datos",
-          description: error instanceof Error ? error.message : "Error desconocido",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    if (id) {
-      fetchEvaluador()
-    }
-  }, [id, toast])
 
   // Función para formatear fecha o mostrar texto alternativo
   const formatFechaOTexto = (fecha: string | null | undefined, textoAlternativo = "Fecha no definida") => {
@@ -88,9 +33,74 @@ export default function DetalleEvaluadorPage({ params }: { params: { id: string 
     }
   }
 
+  useEffect(() => {
+    const fetchEvaluador = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        if (isNaN(id)) {
+          throw new Error("ID de evaluador inválido")
+        }
+
+        // Obtener datos del evaluador
+        const response = await fetch(`/api/evaluadores/${id}`, {
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || `Error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        logger.debug("Datos del evaluador recibidos:", data)
+        setEvaluador(data)
+
+        // Obtener exámenes habilitados para este evaluador
+        const examenesResponse = await fetch(`/api/evaluadores/${id}/examenes`, {
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
+
+        if (examenesResponse.ok) {
+          const examenesData = await examenesResponse.json()
+          logger.debug("Exámenes del evaluador recibidos:", examenesData)
+          setExamenesEvaluador(examenesData)
+        } else {
+          const errorData = await examenesResponse.json().catch(() => ({}))
+          logger.warn("Error al obtener exámenes del evaluador:", errorData)
+          setExamenesEvaluador([])
+        }
+      } catch (error) {
+        logger.error("Error cargando evaluador:", error)
+        setError(error instanceof Error ? error.message : "Error desconocido al cargar evaluador")
+        toast({
+          title: "Error al cargar datos",
+          description: error instanceof Error ? error.message : "Error desconocido",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvaluador()
+  }, [id, toast])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
         <p className="text-muted-foreground">Cargando información del evaluador...</p>
       </div>
     )
@@ -129,9 +139,11 @@ export default function DetalleEvaluadorPage({ params }: { params: { id: string 
             <p className="text-muted-foreground">Información completa del evaluador.</p>
           </div>
         </div>
-        <Button onClick={() => router.push(`/evaluadores/${id}/editar`)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Editar
+        <Button asChild>
+          <Link href={`/evaluadores/${id}/editar`}>
+            <Edit className="mr-2 h-4 w-4" />
+            Editar
+          </Link>
         </Button>
       </div>
 
@@ -184,15 +196,15 @@ export default function DetalleEvaluadorPage({ params }: { params: { id: string 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {examenesEvaluador && examenesEvaluador.length > 0 ? (
+                {examenesEvaluador.length > 0 ? (
                   examenesEvaluador.map((examen) => (
                     <TableRow key={examen.id}>
-                      <TableCell className="font-medium">{examen.titulo}</TableCell>
+                      <TableCell className="font-medium">{examen.examen_titulo}</TableCell>
                       <TableCell>{formatFechaOTexto(examen.fecha_aplicacion)}</TableCell>
                       <TableCell>{examen.estado || "Pendiente"}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm" onClick={() => router.push(`/examenes/${examen.id}`)}>
-                          Ver
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/evaluador/resultados/${examen.id}`}>Ver</Link>
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -10,12 +10,16 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { useAppContext } from "@/context/app-context"
 import { useToast } from "@/components/ui/use-toast"
+import { use } from "react"
+import logger from "@/lib/logger"
 
-export default function EditarEvaluadorPage({ params }: { params: { id: string } }) {
+export default function EditarEvaluadorPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
   const { evaluadores, actualizarEvaluador } = useAppContext()
-  const id = Number.parseInt(params.id)
+  // Unwrap params using React.use
+  const { id: paramId } = use(params)
+  const id = Number.parseInt(paramId)
   const [isLoading, setIsLoading] = useState(false)
   const [evaluador, setEvaluador] = useState<any>({
     nombre: "",
@@ -28,35 +32,43 @@ export default function EditarEvaluadorPage({ params }: { params: { id: string }
 
   useEffect(() => {
     const fetchEvaluador = async () => {
-      setIsLoading(true)
+      try {
+        setIsLoading(true)
 
-      // Primero intentar buscar el evaluador por ID desde el contexto
-      const evaluadorEncontrado = evaluadores.find((e) => e.id === id)
+        if (isNaN(id)) {
+          throw new Error("ID de evaluador inválido")
+        }
 
-      if (evaluadorEncontrado) {
-        // Si lo encuentra en el contexto, usarlo
-        setEvaluador({
-          id: evaluadorEncontrado.id,
-          nombre: evaluadorEncontrado.nombre || "",
-          apellido: evaluadorEncontrado.apellido || "",
-          email: evaluadorEncontrado.email || "",
-          especialidad: evaluadorEncontrado.especialidad || "",
-          categoria: evaluadorEncontrado.categoria || "",
-          activo: evaluadorEncontrado.activo === undefined ? true : evaluadorEncontrado.activo,
-        })
-        setIsLoading(false)
-      } else {
-        // Si no está en el contexto, intentar obtenerlo de la API
-        try {
+        // Primero intentar buscar el evaluador por ID desde el contexto
+        const evaluadorEncontrado = evaluadores.find((e) => e.id === id)
+
+        if (evaluadorEncontrado) {
+          // Si lo encuentra en el contexto, usarlo
+          logger.debug("Evaluador encontrado en contexto:", evaluadorEncontrado)
+          setEvaluador({
+            id: evaluadorEncontrado.id,
+            nombre: evaluadorEncontrado.nombre || "",
+            apellido: evaluadorEncontrado.apellido || "",
+            email: evaluadorEncontrado.email || "",
+            especialidad: evaluadorEncontrado.especialidad || "",
+            categoria: evaluadorEncontrado.categoria || "",
+            activo: evaluadorEncontrado.activo === undefined ? true : evaluadorEncontrado.activo,
+          })
+        } else {
+          // Si no está en el contexto, intentar obtenerlo de la API
+          logger.debug(`Buscando evaluador ${id} en la API`)
           const response = await fetch(`/api/evaluadores/${id}`, {
             method: "GET",
             headers: {
               "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0",
             },
           })
 
           if (response.ok) {
             const data = await response.json()
+            logger.debug("Evaluador recibido de la API:", data)
             setEvaluador({
               id: data.id,
               nombre: data.nombre || "",
@@ -67,31 +79,24 @@ export default function EditarEvaluadorPage({ params }: { params: { id: string }
               activo: data.activo === undefined ? true : data.activo,
             })
           } else {
-            // Si tampoco está en la API, mostrar un error y redirigir
-            toast({
-              title: "Error",
-              description: "No se pudo encontrar el evaluador",
-              variant: "destructive",
-            })
-            router.push("/evaluadores")
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || "No se pudo encontrar el evaluador")
           }
-        } catch (error) {
-          console.error("Error al obtener evaluador:", error)
-          toast({
-            title: "Error",
-            description: "Ocurrió un error al cargar los datos del evaluador",
-            variant: "destructive",
-          })
-          router.push("/evaluadores")
-        } finally {
-          setIsLoading(false)
         }
+      } catch (error) {
+        logger.error("Error al obtener evaluador:", error)
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Ocurrió un error al cargar los datos del evaluador",
+          variant: "destructive",
+        })
+        router.push("/evaluadores")
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    if (id) {
-      fetchEvaluador()
-    }
+    fetchEvaluador()
   }, [id, evaluadores, router, toast])
 
   const handleGuardar = async () => {
@@ -100,6 +105,11 @@ export default function EditarEvaluadorPage({ params }: { params: { id: string }
     setIsLoading(true)
 
     try {
+      // Validar campos requeridos
+      if (!evaluador.nombre || !evaluador.email) {
+        throw new Error("El nombre y el correo electrónico son obligatorios")
+      }
+
       // Actualizar el evaluador en la API
       const response = await fetch(`/api/evaluadores/${id}`, {
         method: "PUT",
@@ -110,7 +120,8 @@ export default function EditarEvaluadorPage({ params }: { params: { id: string }
       })
 
       if (!response.ok) {
-        throw new Error("Error al actualizar el evaluador")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Error al actualizar el evaluador")
       }
 
       // Actualizar el evaluador en el contexto global
@@ -127,19 +138,29 @@ export default function EditarEvaluadorPage({ params }: { params: { id: string }
         router.push(`/evaluadores/${id}`)
       }, 800)
     } catch (error) {
+      logger.error("Error al guardar evaluador:", error)
       setIsLoading(false)
       toast({
         title: "Error",
-        description: "Ocurrió un error al guardar los cambios.",
+        description: error instanceof Error ? error.message : "Ocurrió un error al guardar los cambios.",
         variant: "destructive",
       })
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <p className="text-muted-foreground">Cargando información del evaluador...</p>
+      </div>
+    )
+  }
+
   if (!evaluador) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
-        <p className="text-muted-foreground">Cargando información del evaluador...</p>
+        <p className="text-muted-foreground">No se encontró el evaluador</p>
       </div>
     )
   }

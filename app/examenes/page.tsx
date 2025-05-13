@@ -140,7 +140,10 @@ export default function ExamenesPage() {
     const matchesStatus = statusFilter === "todos" || estado.toLowerCase() === statusFilter.toLowerCase()
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const isReciente = fechaAplicacion && fechaAplicacion >= thirtyDaysAgo
+    const isReciente =
+    fechaAplicacion &&
+    fechaAplicacion >= thirtyDaysAgo &&
+    fechaAplicacion < new Date(); // Asegura que la fecha sea anterior a la actual
     const isValidStatus = ["activo", "inactivo"].includes(estado.toLowerCase())
     return matchesSearch && matchesStatus && isReciente && isValidStatus
   })
@@ -187,14 +190,15 @@ export default function ExamenesPage() {
       <Accordion type="single" collapsible className="w-full rounded-lg shadow-sm">
         {dates.map((date) => (
           <AccordionItem key={date} value={date} className="border rounded-xl bg-white shadow-sm mb-4 overflow-hidden">
-            <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 transition-colors">
-              <div className="flex w-full justify-between items-center">
-                <span>{date}</span>
-               
-              </div>
-            </AccordionTrigger>
+           <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 transition-colors">
+            <div className="flex w-full justify-between items-center">
+              <span>
+                {date} {date !== "Sin fecha" ? ` - ${groupedExams[date].length} estaciones` : ""}
+              </span>
+            </div>
+          </AccordionTrigger>
             <AccordionContent className="p-4 border-t">
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-4" style={{ marginBottom: "1rem" }}>
                    <Button
                   onClick={(e) => {
                     e.stopPropagation()

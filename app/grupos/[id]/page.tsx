@@ -9,11 +9,15 @@ import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
+import { use } from "react"
+import logger from "@/lib/logger"
 
-export default function DetalleGrupoPage({ params }: { params: { id: string } }) {
+export default function DetalleGrupoPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
-  const id = Number.parseInt(params.id)
+  // Unwrap params using React.use
+  const { id: paramId } = use(params)
+  const id = Number.parseInt(paramId)
   const [grupo, setGrupo] = useState<any>(null)
   const [alumnosGrupo, setAlumnosGrupo] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -35,8 +39,18 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
         setIsLoading(true)
         setError(null)
 
+        if (isNaN(id)) {
+          throw new Error("ID de grupo inválido")
+        }
+
         // Obtener datos del grupo y sus alumnos
-        const response = await fetch(`/api/grupos/${id}`)
+        const response = await fetch(`/api/grupos/${id}`, {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
@@ -44,10 +58,19 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
         }
 
         const data = await response.json()
+        logger.debug("Datos del grupo recibidos:", data)
         setGrupo(data)
-        setAlumnosGrupo(data.alumnos || [])
+
+        // Ordenar alumnos alfabéticamente por nombre y luego por apellido
+        const alumnosOrdenados = (data.alumnos || []).sort((a: any, b: any) => {
+          const nombreComparison = a.nombre.localeCompare(b.nombre);
+          if (nombreComparison !== 0) return nombreComparison;
+          return a.apellido.localeCompare(b.apellido);
+        });
+
+        setAlumnosGrupo(alumnosOrdenados)
       } catch (error) {
-        console.error("Error cargando grupo:", error)
+        logger.error("Error cargando grupo:", error)
         setError(error instanceof Error ? error.message : "Error desconocido al cargar grupo")
         toast({
           title: "Error al cargar datos",
@@ -59,12 +82,7 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
       }
     }
 
-    if (!isNaN(id)) {
-      fetchGrupo()
-    } else {
-      setError("ID inválido")
-      setIsLoading(false)
-    }
+    fetchGrupo()
   }, [id, toast])
 
   if (isLoading) {
@@ -113,9 +131,11 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
           <Button asChild variant="outline">
             <Link href={`/asignar-examen?grupoId=${id}`}>Asignar Examen</Link>
           </Button>
-          <Button onClick={() => router.push(`/grupos/${id}/editar`)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
+          <Button asChild>
+            <Link href={`/grupos/${id}/editar`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </div>
@@ -179,17 +199,23 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
                   <TableHead>ID</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Documento</TableHead>
+                  <TableHead>Promoción</TableHead>
+                  <TableHead>Sede</TableHead>
                   <TableHead>Hospital</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {alumnosGrupo && alumnosGrupo.length > 0 ? (
+                {alumnosGrupo.length > 0 ? (
                   alumnosGrupo.map((alumno) => (
                     <TableRow key={alumno.id}>
                       <TableCell className="font-medium">{alumno.id}</TableCell>
                       <TableCell>{`${alumno.nombre} ${alumno.apellido}`}</TableCell>
                       <TableCell>{alumno.email || "-"}</TableCell>
+                      <TableCell>{alumno.documento || "-"}</TableCell>
+                      <TableCell>{alumno.promocion || "-"}</TableCell>
+                      <TableCell>{alumno.sede || "-"}</TableCell>
                       <TableCell>{alumno.hospital_nombre || "-"}</TableCell>
                       <TableCell className="text-right">
                         <Button asChild variant="ghost" size="sm">
@@ -200,7 +226,7 @@ export default function DetalleGrupoPage({ params }: { params: { id: string } })
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
+                    <TableCell colSpan={8} className="text-center py-4">
                       No hay alumnos asignados a este grupo.
                     </TableCell>
                   </TableRow>

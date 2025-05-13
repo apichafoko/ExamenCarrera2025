@@ -24,6 +24,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatDate } from "@/lib/utils"
+import logger from "@/lib/logger"
+
 
 export default function GruposPage() {
   const [grupos, setGrupos] = useState<any[]>([])
@@ -83,18 +85,22 @@ export default function GruposPage() {
         method: "DELETE",
         headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
       })
-
+  
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.message || `Error: ${response.status}`)
       }
-
+  
       setGrupos((prev) => prev.filter((grupo) => grupo.id !== id))
       toast({
-        title: "Grupo eliminado",
+        title: "Grupo Eliminado",
         description: "El grupo ha sido eliminado correctamente.",
       })
+  
+      // Redirect to the groups list page
+      router.push("/grupos")
     } catch (error) {
+      logger.error("Error eliminando grupo:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al eliminar el grupo",
@@ -252,7 +258,7 @@ export default function GruposPage() {
                         <HoverCardContent className="w-[260px] text-sm" side="left" align="start" sideOffset={10}>
                           {grupo.cant_alumnos > 0
                             ? "No se puede eliminar este grupo porque tiene alumnos asignados."
-                            : "Eliminar grupo"}
+                            : "Este grupo puede eliminarse"}
                         </HoverCardContent>
                       </HoverCard>
 

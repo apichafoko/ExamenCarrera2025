@@ -14,6 +14,9 @@ import {
   ClipboardList,
   Loader2,
   RefreshCw,
+  Calendar,
+  FileText,
+  MapPin,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -21,11 +24,14 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useToast } from "@/components/ui/use-toast"
 import logger from "@/lib/logger"
+import { use } from "react"
 
-export default function DetalleAlumnoPage({ params }: { params: { id: string } }) {
+export default function DetalleAlumnoPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
-  const id = Number.parseInt(params.id)
+  // Unwrap params using React.use
+  const { id: paramId } = use(params)
+  const id = Number.parseInt(paramId)
   const [alumno, setAlumno] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -33,22 +39,24 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
   const cargarAlumno = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/alumnos/${id}`)
+      const response = await fetch(`/api/alumnos/${id}`, {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      })
 
       if (!response.ok) {
-        throw new Error("No se pudo cargar el alumno")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error: ${response.status}`)
       }
 
       const alumnoData = await response.json()
+      logger.debug("Datos del alumno recibidos:", alumnoData)
 
       if (!alumnoData) {
-        toast({
-          title: "Error",
-          description: "No se encontró el alumno solicitado.",
-          variant: "destructive",
-        })
-        router.push("/alumnos")
-        return
+        throw new Error("No se encontró el alumno solicitado")
       }
 
       setAlumno(alumnoData)
@@ -56,27 +64,54 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
       logger.error("Error cargando alumno:", error)
       toast({
         title: "Error",
-        description: "Ocurrió un error al cargar los datos del alumno.",
+        description: error instanceof Error ? error.message : "Ocurrió un error al cargar los datos del alumno.",
         variant: "destructive",
       })
+      router.push("/alumnos")
     } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    cargarAlumno()
+    if (!isNaN(id)) {
+      cargarAlumno()
+    } else {
+      logger.error("ID de alumno inválido:", paramId)
+      toast({
+        title: "Error",
+        description: "ID de alumno inválido.",
+        variant: "destructive",
+      })
+      router.push("/alumnos")
+    }
   }, [id])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
-    await cargarAlumno()
-    setIsRefreshing(false)
+    try {
+      await cargarAlumno()
+      toast({
+        title: "Datos actualizados",
+        description: "La información del alumno ha sido actualizada.",
+      })
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
-    toast({
-      title: "Datos actualizados",
-      description: "La información del alumno ha sido actualizada.",
-    })
+  // Función para formatear fecha o mostrar texto alternativo
+  const formatFechaOTexto = (fecha: string | null | undefined, textoAlternativo = "No especificado") => {
+    if (!fecha) return textoAlternativo
+    try {
+      return new Date(fecha).toLocaleDateString("es-MX", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    } catch (error) {
+      return textoAlternativo
+    }
   }
 
   if (isLoading) {
@@ -119,9 +154,11 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
               Asignar Examen
             </Link>
           </Button>
-          <Button onClick={() => router.push(`/alumnos/${id}/editar`)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
+          <Button asChild>
+            <Link href={`/alumnos/${id}/editar`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </div>
@@ -146,14 +183,42 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
                 <Mail className="mr-2 h-4 w-4" />
                 Email
               </p>
-              <p className="text-lg">{alumno.email}</p>
+              <p className="text-lg">{alumno.email || "No especificado"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground flex items-center">
                 <Phone className="mr-2 h-4 w-4" />
                 Teléfono
               </p>
-              <p className="text-lg">{alumno.telefono}</p>
+              <p className="text-lg">{alumno.telefono || "No especificado"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center">
+                <Calendar className="mr-2 h-4 w-4" />
+                Fecha de Nacimiento
+              </p>
+              <p className="text-lg">{formatFechaOTexto(alumno.fecha_nacimiento)}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center">
+                <FileText className="mr-2 h-4 w-4" />
+                Documento
+              </p>
+              <p className="text-lg">{alumno.documento || "No especificado"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Promoción
+              </p>
+              <p className="text-lg">{alumno.promocion || "No especificado"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center">
+                <MapPin className="mr-2 h-4 w-4" />
+                Sede
+              </p>
+              <p className="text-lg">{alumno.sede || "No especificado"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground flex items-center">
@@ -190,7 +255,7 @@ export default function DetalleAlumnoPage({ params }: { params: { id: string } }
                       <TableCell className="font-medium">{examen.id}</TableCell>
                       <TableCell>{examen.nombre || examen.titulo}</TableCell>
                       <TableCell>
-                        {new Date(examen.fecha_aplicacion || examen.fecha_aplicacion).toLocaleDateString()}
+                        {formatFechaOTexto(examen.fecha || examen.fecha)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={examen.estado === "Completado" ? "default" : "outline"}>{examen.estado}</Badge>

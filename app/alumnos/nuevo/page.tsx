@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-
-// Importar el logger
 import logger from "@/lib/logger"
 
 export default function NuevoAlumnoPage() {
@@ -24,6 +22,10 @@ export default function NuevoAlumnoPage() {
     email: "",
     telefono: "",
     hospital_id: "",
+    fecha_nacimiento: "",
+    promocion: "",
+    sede: "",
+    documento: "",
   })
   const [hospitales, setHospitales] = useState<any[]>([])
 
@@ -69,10 +71,23 @@ export default function NuevoAlumnoPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(alumno),
+        body: JSON.stringify({
+          nombre: alumno.nombre,
+          apellido: alumno.apellido,
+          email: alumno.email,
+          telefono: alumno.telefono || null,
+          hospital_id: alumno.hospital_id ? Number.parseInt(alumno.hospital_id) : null,
+          fecha_nacimiento: alumno.fecha_nacimiento || null,
+          promocion: alumno.promocion ? Number.parseInt(alumno.promocion) : null,
+          sede: alumno.sede || null,
+          documento: alumno.documento ? Number.parseInt(alumno.documento) : null,
+        }),
       })
 
-      if (!response.ok) throw new Error("Error al crear el alumno")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Error al crear el alumno")
+      }
 
       toast({
         title: "Alumno creado",
@@ -88,7 +103,7 @@ export default function NuevoAlumnoPage() {
       setIsLoading(false)
       toast({
         title: "Error",
-        description: "Ocurrió un error al crear el alumno.",
+        description: error instanceof Error ? error.message : "Ocurrió un error al crear el alumno.",
         variant: "destructive",
       })
     }
@@ -165,7 +180,7 @@ export default function NuevoAlumnoPage() {
               <Label htmlFor="hospital">Hospital</Label>
               <Select
                 value={alumno.hospital_id?.toString() || ""}
-                onValueChange={(value) => setAlumno({ ...alumno, hospital_id: Number.parseInt(value) })}
+                onValueChange={(value) => setAlumno({ ...alumno, hospital_id: value })}
               >
                 <SelectTrigger id="hospital">
                   <SelectValue placeholder="Seleccionar hospital" />
@@ -178,6 +193,45 @@ export default function NuevoAlumnoPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fecha_nacimiento">Fecha de Nacimiento</Label>
+              <Input
+                id="fecha_nacimiento"
+                type="date"
+                value={alumno.fecha_nacimiento}
+                onChange={(e) => setAlumno({ ...alumno, fecha_nacimiento: e.target.value })}
+                placeholder="Ej: 2000-01-01"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="promocion">Promoción</Label>
+              <Input
+                id="promocion"
+                type="number"
+                value={alumno.promocion}
+                onChange={(e) => setAlumno({ ...alumno, promocion: e.target.value })}
+                placeholder="Ej: 2023"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sede">Sede</Label>
+              <Input
+                id="sede"
+                value={alumno.sede}
+                onChange={(e) => setAlumno({ ...alumno, sede: e.target.value })}
+                placeholder="Ej: Madrid"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="documento">Documento</Label>
+              <Input
+                id="documento"
+                type="number"
+                value={alumno.documento}
+                onChange={(e) => setAlumno({ ...alumno, documento: e.target.value })}
+                placeholder="Ej: 12345678"
+              />
             </div>
           </div>
         </CardContent>
