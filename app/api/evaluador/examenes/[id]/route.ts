@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       JOIN alumnos a ON ae.alumno_id = a.id
       JOIN examenes e ON ae.examen_id = e.id
       WHERE ae.id = $1 AND e.estado = 'ACTIVO'
+
     `
     const basicInfoResult = await executeQuery(basicInfoQuery, [alumnoExamenId])
 

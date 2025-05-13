@@ -247,7 +247,7 @@ export default function EvaluadoresPage() {
                         <HoverCardContent className="w-[260px] text-sm" side="left" align="start" sideOffset={10}>
                           {evaluadoresConExamenes.includes(evaluador.id)
                             ? "Este evaluador no se puede eliminar porque tiene exámenes asignados."
-                            : "Eliminar evaluador"}
+                            : "Este evaluador puede ser eliminado."}
                         </HoverCardContent>
                       </HoverCard>
                     </div>

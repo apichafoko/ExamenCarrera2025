@@ -145,7 +145,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         data.titulo,
         data.descripcion || null,
         data.fecha_aplicacion,
-        data.estado || "Activo",
+        data.estado || "ACTIVO",
         id,
       ]);
 

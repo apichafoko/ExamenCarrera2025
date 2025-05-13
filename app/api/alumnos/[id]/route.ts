@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { alumnosService } from "@/lib/db-service"
-// Importar el logger
 import logger from "@/lib/logger"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
@@ -26,6 +25,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
       telefono: alumno.telefono || "",
       hospital_id: alumno.hospital_id || null,
       hospital_nombre: alumno.hospital_nombre || null,
+      fecha_nacimiento: alumno.fecha_nacimiento ? new Date(alumno.fecha_nacimiento).toISOString() : null,
+      promocion: alumno.promocion || null,
+      sede: alumno.sede || null,
+      documento: alumno.documento || null,
       // Convertir fechas a strings si existen
       fecha_creacion: alumno.fecha_creacion ? new Date(alumno.fecha_creacion).toISOString() : null,
       fecha_actualizacion: alumno.fecha_actualizacion ? new Date(alumno.fecha_actualizacion).toISOString() : null,
@@ -77,6 +80,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       email: data.email,
       telefono: data.telefono || "",
       hospital_id: data.hospital_id || null,
+      fecha_nacimiento: data.fecha_nacimiento || null,
+      promocion: data.promocion ? Number.parseInt(data.promocion) : null,
+      sede: data.sede || null,
+      documento: data.documento ? Number.parseInt(data.documento) : null,
     })
 
     if (!alumno) {
@@ -92,6 +99,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       telefono: alumno.telefono || "",
       hospital_id: alumno.hospital_id || null,
       hospital_nombre: alumno.hospital_nombre || null,
+      fecha_nacimiento: alumno.fecha_nacimiento ? new Date(alumno.fecha_nacimiento).toISOString() : null,
+      promocion: alumno.promocion || null,
+      sede: alumno.sede || null,
+      documento: alumno.documento || null,
       // Convertir fechas a strings si existen
       fecha_creacion: alumno.fecha_creacion ? new Date(alumno.fecha_creacion).toISOString() : null,
       fecha_actualizacion: alumno.fecha_actualizacion ? new Date(alumno.fecha_actualizacion).toISOString() : null,

@@ -93,13 +93,13 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
         }
 
         // Normalizar el valor de estado
-        let normalizedEstado = "Activo"; // Valor predeterminado
+        let normalizedEstado = "ACTIVO"; // Valor predeterminado
         if (examenData.estado) {
           const estadoLower = examenData.estado.toLowerCase();
-          if (estadoLower === "activo") {
-            normalizedEstado = "Activo";
-          } else if (estadoLower === "inactivo") {
-            normalizedEstado = "Inactivo";
+          if (estadoLower === "ACTIVO") {
+            normalizedEstado = "ACTIVO";
+          } else if (estadoLower === "INACTIVO") {
+            normalizedEstado = "INACTIVO";
           }
         }
 
@@ -517,7 +517,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
       titulo: examen.titulo || "",
       descripcion: examen.descripcion || "",
       fecha_aplicacion: examen.fecha_aplicacion || "",
-      estado: examen.estado || "Activo", // Asegurarse de incluir el estado
+      estado: examen.estado || "ACTIVO", // Asegurarse de incluir el estado
       evaluadores_ids: selectedEvaluadores,
       estaciones: examen.estaciones.map((estacion: any) => {
         const preguntasProcesadas = estacion.preguntas.map((pregunta: any) => {
@@ -944,8 +944,8 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
                       <SelectValue placeholder="Seleccionar estado" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Activo">Activo</SelectItem>
-                      <SelectItem value="Inactivo">Inactivo</SelectItem>
+                      <SelectItem value="ACTIVO">Activo</SelectItem>
+                      <SelectItem value="INACTIVO">Inactivo</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

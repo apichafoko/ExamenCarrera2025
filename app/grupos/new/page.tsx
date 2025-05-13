@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Loader2, ArrowRightCircle, ArrowLeftCircle, Users } from "lucide-react"
+import { ArrowLeft, Save, Loader2, ArrowRightCircle, ArrowLeftCircle, Users, Search } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import logger from "@/lib/logger"
 
 export default function NuevoGrupoPage() {
   const router = useRouter()
@@ -19,20 +20,35 @@ export default function NuevoGrupoPage() {
     nombre: "",
     fecha: "",
   })
-
   const [alumnosDisponibles, setAlumnosDisponibles] = useState<any[]>([])
   const [alumnosSeleccionados, setAlumnosSeleccionados] = useState<any[]>([])
+  const [searchTermDisponibles, setSearchTermDisponibles] = useState("")
+  const [searchTermSeleccionados, setSearchTermSeleccionados] = useState("")
 
   useEffect(() => {
     const cargarAlumnos = async () => {
       try {
         setIsDataLoading(true)
-        const res = await fetch("/api/alumnos")
+        const res = await fetch("/api/alumnos", {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
         if (!res.ok) throw new Error("No se pudieron cargar los alumnos")
         const alumnosData = await res.json()
-        setAlumnosDisponibles(alumnosData)
+
+        // Ordenar alumnos alfabéticamente por nombre y luego por apellido
+        const alumnosOrdenados = alumnosData.sort((a: any, b: any) => {
+          const nombreComparison = a.nombre.localeCompare(b.nombre);
+          if (nombreComparison !== 0) return nombreComparison;
+          return a.apellido.localeCompare(b.apellido);
+        })
+
+        setAlumnosDisponibles(alumnosOrdenados)
       } catch (error) {
-        console.error("Error cargando alumnos:", error)
+        logger.error("Error cargando alumnos:", error)
         toast({
           title: "Error",
           description: "Ocurrió un error al cargar los alumnos.",
@@ -47,14 +63,44 @@ export default function NuevoGrupoPage() {
   }, [toast])
 
   const seleccionarAlumno = (alumno: any) => {
-    setAlumnosSeleccionados([...alumnosSeleccionados, alumno])
+    const nuevosSeleccionados = [...alumnosSeleccionados, alumno].sort((a: any, b: any) => {
+      const nombreComparison = a.nombre.localeCompare(b.nombre);
+      if (nombreComparison !== 0) return nombreComparison;
+      return a.apellido.localeCompare(b.apellido);
+    })
+    setAlumnosSeleccionados(nuevosSeleccionados)
     setAlumnosDisponibles(alumnosDisponibles.filter((a) => a.id !== alumno.id))
   }
 
   const deseleccionarAlumno = (alumno: any) => {
-    setAlumnosDisponibles([...alumnosDisponibles, alumno])
+    const nuevosDisponibles = [...alumnosDisponibles, alumno].sort((a: any, b: any) => {
+      const nombreComparison = a.nombre.localeCompare(b.nombre);
+      if (nombreComparison !== 0) return nombreComparison;
+      return a.apellido.localeCompare(b.apellido);
+    })
+    setAlumnosDisponibles(nuevosDisponibles)
     setAlumnosSeleccionados(alumnosSeleccionados.filter((a) => a.id !== alumno.id))
   }
+
+  // Filtrar alumnos disponibles según el término de búsqueda
+  const filteredAlumnosDisponibles = alumnosDisponibles.filter((alumno) => {
+    const searchLower = searchTermDisponibles.toLowerCase();
+    return (
+      alumno.nombre.toLowerCase().includes(searchLower) ||
+      alumno.apellido.toLowerCase().includes(searchLower) ||
+      alumno.email.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Filtrar alumnos seleccionados según el término de búsqueda
+  const filteredAlumnosSeleccionados = alumnosSeleccionados.filter((alumno) => {
+    const searchLower = searchTermSeleccionados.toLowerCase();
+    return (
+      alumno.nombre.toLowerCase().includes(searchLower) ||
+      alumno.apellido.toLowerCase().includes(searchLower) ||
+      alumno.email.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleGuardar = async () => {
     if (!grupo.nombre) {
@@ -77,22 +123,21 @@ export default function NuevoGrupoPage() {
 
     setIsLoading(true)
 
-    console.log(
-      "ENVIANDO A API:",
-      JSON.stringify({
-        ...grupo,
-        alumnos_ids: alumnosSeleccionados.map((a) => a.id),
-      }),
-    )
+    const payload = {
+      ...grupo,
+      alumnos_ids: alumnosSeleccionados.map((a) => a.id),
+    };
+    logger.debug("ENVIANDO A API:", payload)
 
     const idsInvalidos = alumnosSeleccionados.filter((a) => !a.id)
     if (idsInvalidos.length > 0) {
-      console.error("IDs inválidos detectados:", idsInvalidos)
+      logger.error("IDs inválidos detectados:", idsInvalidos)
       toast({
         title: "Error",
         description: "Uno o más alumnos tienen un ID inválido.",
         variant: "destructive",
       })
+      setIsLoading(false)
       return
     }
 
@@ -102,13 +147,13 @@ export default function NuevoGrupoPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...grupo,
-          alumnos_ids: alumnosSeleccionados.map((a) => a.id),
-        }),
+        body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error("Error al crear el grupo")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Error al crear el grupo")
+      }
 
       toast({
         title: "Grupo creado",
@@ -120,11 +165,11 @@ export default function NuevoGrupoPage() {
         router.push("/grupos")
       }, 800)
     } catch (error) {
-      console.error("Error al crear el grupo:", error)
+      logger.error("Error al crear el grupo:", error)
       setIsLoading(false)
       toast({
         title: "Error",
-        description: "Ocurrió un error al crear el grupo.",
+        description: error instanceof Error ? error.message : "Ocurrió un error al crear el grupo.",
         variant: "destructive",
       })
     }
@@ -199,14 +244,27 @@ export default function NuevoGrupoPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Columna de alumnos disponibles */}
               <div className="border rounded-md">
                 <div className="bg-muted p-2 rounded-t-md">
-                  <h3 className="font-medium">Alumnos disponibles ({alumnosDisponibles.length})</h3>
+                  <h3 className="font-medium">Alumnos disponibles ({filteredAlumnosDisponibles.length})</h3>
+                </div>
+                <div className="p-2">
+                  <div className="relative mb-2">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Buscar alumnos..."
+                      className="pl-8"
+                      value={searchTermDisponibles}
+                      onChange={(e) => setSearchTermDisponibles(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <ScrollArea className="h-[300px] p-2">
                   <div className="space-y-1">
-                    {alumnosDisponibles.length > 0 ? (
-                      alumnosDisponibles.map((alumno) => (
+                    {filteredAlumnosDisponibles.length > 0 ? (
+                      filteredAlumnosDisponibles.map((alumno) => (
                         <div
                           key={alumno.id}
                           className="flex items-center justify-between p-2 hover:bg-muted rounded-md"
@@ -214,31 +272,58 @@ export default function NuevoGrupoPage() {
                           <span>
                             {alumno.nombre} {alumno.apellido}
                           </span>
-                          <Button variant="ghost" size="sm" onClick={() => seleccionarAlumno(alumno)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => seleccionarAlumno(alumno)}
+                            title="Seleccionar alumno"
+                          >
                             <ArrowRightCircle className="h-4 w-4" />
                           </Button>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground p-2">No hay alumnos disponibles</p>
+                      <p className="text-sm text-muted-foreground p-2">
+                        {searchTermDisponibles
+                          ? "No se encontraron alumnos que coincidan con la búsqueda"
+                          : "No hay alumnos disponibles"}
+                      </p>
                     )}
                   </div>
                 </ScrollArea>
               </div>
 
+              {/* Columna de alumnos seleccionados */}
               <div className="border rounded-md">
                 <div className="bg-secondary p-2 rounded-t-md">
-                  <h3 className="font-medium">Alumnos seleccionados ({alumnosSeleccionados.length})</h3>
+                  <h3 className="font-medium">Alumnos seleccionados ({filteredAlumnosSeleccionados.length})</h3>
+                </div>
+                <div className="p-2">
+                  <div className="relative mb-2">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Buscar alumnos..."
+                      className="pl-8"
+                      value={searchTermSeleccionados}
+                      onChange={(e) => setSearchTermSeleccionados(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <ScrollArea className="h-[300px] p-2">
                   <div className="space-y-1">
-                    {alumnosSeleccionados.length > 0 ? (
-                      alumnosSeleccionados.map((alumno) => (
+                    {filteredAlumnosSeleccionados.length > 0 ? (
+                      filteredAlumnosSeleccionados.map((alumno) => (
                         <div
                           key={alumno.id}
                           className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded-md"
                         >
-                          <Button variant="ghost" size="sm" onClick={() => deseleccionarAlumno(alumno)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deseleccionarAlumno(alumno)}
+                            title="Deseleccionar alumno"
+                          >
                             <ArrowLeftCircle className="h-4 w-4" />
                           </Button>
                           <span>
@@ -247,7 +332,11 @@ export default function NuevoGrupoPage() {
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground p-2">No hay alumnos seleccionados</p>
+                      <p className="text-sm text-muted-foreground p-2">
+                        {searchTermSeleccionados
+                          ? "No se encontraron alumnos que coincidan con la búsqueda"
+                          : "No hay alumnos seleccionados"}
+                      </p>
                     )}
                   </div>
                 </ScrollArea>

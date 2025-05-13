@@ -9,10 +9,15 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2, ArrowRightCircle, ArrowLeftCircle, Users, Search } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import logger from "@/lib/logger"
+import { use } from "react"
 
-export default function EditarGrupoPage({ params }: { params: { id: string } }) {
+export default function EditarGrupoPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
+  // Unwrap params using React.use
+  const { id: paramId } = use(params)
+  const id = Number.parseInt(paramId)
   const [isLoading, setIsLoading] = useState(false)
   const [isDataLoading, setIsDataLoading] = useState(true)
   const [grupo, setGrupo] = useState({
@@ -21,31 +26,57 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
     fecha: "",
     activo: true,
   })
-
   const [todosLosAlumnos, setTodosLosAlumnos] = useState<any[]>([])
   const [alumnosAsignados, setAlumnosAsignados] = useState<any[]>([])
   const [alumnosNoAsignados, setAlumnosNoAsignados] = useState<any[]>([])
-  const [searchTermNoAsignados, setSearchTermNoAsignados] = useState("") // Nuevo estado para búsqueda de no asignados
-  const [searchTermAsignados, setSearchTermAsignados] = useState("") // Nuevo estado para búsqueda de asignados
-
-  const id = Number.parseInt(params.id)
+  const [searchTermNoAsignados, setSearchTermNoAsignados] = useState("")
+  const [searchTermAsignados, setSearchTermAsignados] = useState("")
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setIsDataLoading(true)
 
-        const grupoRes = await fetch(`/api/grupos/${id}`)
-        const alumnosRes = await fetch("/api/alumnos")
-        const asignadosRes = await fetch(`/api/grupos/${id}/alumnos`)
+        if (isNaN(id)) {
+          throw new Error("ID de grupo inválido")
+        }
+
+        const grupoRes = await fetch(`/api/grupos/${id}`, {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
+        const alumnosRes = await fetch("/api/alumnos", {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
+        const asignadosRes = await fetch(`/api/grupos/${id}/alumnos`, {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
 
         if (!grupoRes.ok || !alumnosRes.ok || !asignadosRes.ok) {
-          throw new Error("Error al obtener datos")
+          const errorData = await Promise.any([
+            grupoRes.json().catch(() => ({})),
+            alumnosRes.json().catch(() => ({})),
+            asignadosRes.json().catch(() => ({})),
+          ])
+          throw new Error(errorData.message || "Error al obtener datos")
         }
 
         const grupoData = await grupoRes.json()
         const alumnosData = await alumnosRes.json()
         const alumnosGrupo = await asignadosRes.json()
+
+        logger.debug("Datos recibidos:", { grupo: grupoData, alumnos: alumnosData, asignados: alumnosGrupo })
 
         setGrupo({
           id: grupoData.id,
@@ -75,19 +106,20 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
         const noAsignados = alumnosOrdenados.filter((alumno: any) => !alumnosIds.has(alumno.id))
         setAlumnosNoAsignados(noAsignados)
       } catch (error) {
-        console.error("Error cargando datos:", error)
+        logger.error("Error cargando datos:", error)
         toast({
           title: "Error",
-          description: "Ocurrió un error al cargar los datos.",
+          description: error instanceof Error ? error.message : "Ocurrió un error al cargar los datos.",
           variant: "destructive",
         })
+        router.push("/grupos")
       } finally {
         setIsDataLoading(false)
       }
     }
 
     cargarDatos()
-  }, [id, toast])
+  }, [id, toast, router])
 
   const asignarAlumno = (alumno: any) => {
     const nuevosAsignados = [...alumnosAsignados, alumno].sort((a: any, b: any) => {
@@ -143,7 +175,7 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
 
     try {
       // Actualizar grupo
-      await fetch(`/api/grupos/${id}`, {
+      const grupoResponse = await fetch(`/api/grupos/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -153,8 +185,17 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
         }),
       })
 
+      if (!grupoResponse.ok) {
+        const errorData = await grupoResponse.json().catch(() => ({}))
+        throw new Error(errorData.message || "Error al actualizar el grupo")
+      }
+
       // Obtener asignaciones actuales
       const actualesRes = await fetch(`/api/grupos/${id}/alumnos`)
+      if (!actualesRes.ok) {
+        const errorData = await actualesRes.json().catch(() => ({}))
+        throw new Error(errorData.message || "Error al obtener alumnos asignados")
+      }
       const alumnosActuales = await actualesRes.json()
       const alumnosActualesIds = new Set(alumnosActuales.map((a: any) => a.id))
       const alumnosNuevosIds = new Set(alumnosAsignados.map((a: any) => a.id))
@@ -177,7 +218,13 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
         ),
       ]
 
-      await Promise.all(operaciones)
+      const results = await Promise.all(operaciones)
+      for (const res of results) {
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          throw new Error(errorData.message || "Error al actualizar asignaciones de alumnos")
+        }
+      }
 
       toast({
         title: "Grupo actualizado",
@@ -189,11 +236,11 @@ export default function EditarGrupoPage({ params }: { params: { id: string } }) 
         router.push(`/grupos/${id}`)
       }, 800)
     } catch (error) {
-      console.error("Error al actualizar el grupo:", error)
+      logger.error("Error al actualizar el grupo:", error)
       setIsLoading(false)
       toast({
         title: "Error",
-        description: "Ocurrió un error al actualizar el grupo.",
+        description: error instanceof Error ? error.message : "Ocurrió un error al actualizar el grupo.",
         variant: "destructive",
       })
     }

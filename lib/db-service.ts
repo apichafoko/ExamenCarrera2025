@@ -3,15 +3,17 @@ import { hashPassword } from "@/lib/auth-service"
 
 // Tipos para nuestros datos
 export type Alumno = {
-  id: number
-  nombre: string
-  apellido: string
-  email: string
-  telefono: string
-  hospital_id: number | null
-  hospital_nombre?: string | null
-  fecha_creacion?: string | null
-  fecha_actualizacion?: string | null
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string | null;
+  hospital_id: number | null;
+  hospital_nombre: string | null;
+  fecha_nacimiento: string | null;
+  promocion: number | null;
+  sede: string | null;
+  documento: number | null;
   examenes?: any[]
 }
 
@@ -62,7 +64,18 @@ export type Grupo = {
 export const alumnosService = {
   getAll: async (): Promise<Alumno[]> => {
     const query = `
-      SELECT a.*, h.nombre as hospital_nombre
+      SELECT 
+        a.id,
+        a.nombre,
+        a.apellido,
+        a.email,
+        a.telefono,
+        a.hospital_id,
+        a.fecha_nacimiento,
+        a.promocion,
+        a.sede,
+        a.documento,
+        h.nombre as hospital_nombre
       FROM alumnos a
       LEFT JOIN hospitales h ON a.hospital_id = h.id
       ORDER BY a.apellido, a.nombre
@@ -71,7 +84,18 @@ export const alumnosService = {
   },
   getById: async (id: number): Promise<Alumno | null> => {
     const query = `
-      SELECT a.*, h.nombre as hospital_nombre
+      SELECT 
+        a.id,
+        a.nombre,
+        a.apellido,
+        a.email,
+        a.telefono,
+        a.hospital_id,
+        a.fecha_nacimiento,
+        a.promocion,
+        a.sede,
+        a.documento,
+        h.nombre as hospital_nombre
       FROM alumnos a
       LEFT JOIN hospitales h ON a.hospital_id = h.id
       WHERE a.id = $1
@@ -80,7 +104,7 @@ export const alumnosService = {
 
     if (result.length === 0) return null
 
-    // Luego obtener los exámenes asignados
+    // Obtener los exámenes asignados
     const queryExamenes = `
       SELECT e.*, ae.estado
       FROM examenes e
@@ -91,28 +115,68 @@ export const alumnosService = {
 
     result[0].examenes = examenes
 
-    return result.length > 0 ? result[0] : null
+    return result[0]
   },
-  create: async (alumno: Omit<Alumno, "id">): Promise<Alumno | null> => {
-    const { nombre, apellido, email, telefono, hospital_id } = alumno
+  create: async (alumno: Omit<Alumno, "id" | "hospital_nombre" | "examenes">): Promise<Alumno | null> => {
+    const { nombre, apellido, email, telefono, hospital_id, fecha_nacimiento, promocion, sede, documento } = alumno
     const query = `
-      INSERT INTO alumnos (nombre, apellido, email, telefono, hospital_id)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO alumnos (
+        nombre, 
+        apellido, 
+        email, 
+        telefono, 
+        hospital_id, 
+        fecha_nacimiento, 
+        promocion, 
+        sede, 
+        documento
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `
-    const result = await executeQuery<Alumno>(query, [nombre, apellido, email, telefono, hospital_id])
-
+    const result = await executeQuery<Alumno>(query, [
+      nombre,
+      apellido,
+      email,
+      telefono,
+      hospital_id,
+      fecha_nacimiento,
+      promocion,
+      sede,
+      documento,
+    ])
+  
     return result.length > 0 ? result[0] : null
   },
-  update: async (id: number, alumno: Partial<Alumno>): Promise<Alumno | null> => {
-    const { nombre, apellido, email, telefono, hospital_id } = alumno
+  update: async (id: number, alumno: Partial<Omit<Alumno, "id" | "hospital_nombre" | "examenes">>): Promise<Alumno | null> => {
+    const { nombre, apellido, email, telefono, hospital_id, fecha_nacimiento, promocion, sede, documento } = alumno
     const query = `
       UPDATE alumnos
-      SET nombre = $1, apellido = $2, email = $3, telefono = $4, hospital_id = $5
-      WHERE id = $6
+      SET 
+        nombre = $1, 
+        apellido = $2, 
+        email = $3, 
+        telefono = $4, 
+        hospital_id = $5, 
+        fecha_nacimiento = $6, 
+        promocion = $7, 
+        sede = $8, 
+        documento = $9
+      WHERE id = $10
       RETURNING *
     `
-    const result = await executeQuery<Alumno>(query, [nombre, apellido, email, telefono, hospital_id, id])
+    const result = await executeQuery<Alumno>(query, [
+      nombre,
+      apellido,
+      email,
+      telefono,
+      hospital_id,
+      fecha_nacimiento,
+      promocion,
+      sede,
+      documento,
+      id,
+    ])
     return result.length > 0 ? result[0] : null
   },
   delete: async (id: number): Promise<boolean> => {
@@ -280,8 +344,8 @@ ORDER BY e.apellido, e.nombre;`
         SET usuario_id = $1
         WHERE id = $2
         `;
-        await executeQuery(updateEvaluadorQuery, [nuevoUsuarioId, nuevoEvaluador.id]);
-        console.log(`Evaluador con ID ${nuevoEvaluador.id} actualizado con usuario_id ${nuevoUsuarioId}`);
+        await executeQuery(updateEvaluadorQuery, [usuarioResult[0].id, nuevoEvaluador.id]);
+        console.log(`Evaluador con ID ${nuevoEvaluador.id} actualizado con usuario_id ${usuarioResult[0].id}`);
       }
 
       // 5. Confirmar transacción

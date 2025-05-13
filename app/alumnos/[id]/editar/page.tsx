@@ -9,14 +9,15 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-
-// Importar el logger
 import logger from "@/lib/logger"
+import { use } from "react"
 
-export default function EditarAlumnoPage({ params }: { params: { id: string } }) {
+export default function EditarAlumnoPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
-  const id = Number.parseInt(params.id)
+  // Unwrap params using React.use
+  const { id: paramId } = use(params)
+  const id = Number.parseInt(paramId)
   const [isLoading, setIsLoading] = useState(false)
   const [isDataLoading, setIsDataLoading] = useState(true)
   const [alumno, setAlumno] = useState<any>({
@@ -26,6 +27,10 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
     email: "",
     telefono: "",
     hospital_id: "",
+    fecha_nacimiento: "",
+    promocion: "",
+    sede: "",
+    documento: "",
   })
   const [hospitales, setHospitales] = useState<any[]>([])
 
@@ -52,22 +57,27 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
           return
         }
 
+        // Log the API response for debugging
+        logger.debug("Datos del alumno recibidos:", alumnoData)
+
         setAlumno({
-          id: alumnoData.id,
+          id: alumnoData.id || 0,
           nombre: alumnoData.nombre || "",
           apellido: alumnoData.apellido || "",
           email: alumnoData.email || "",
           telefono: alumnoData.telefono || "",
-          hospital_id: alumnoData.hospital_id?.toString() || "",
+          hospital_id: alumnoData.hospital_id ? alumnoData.hospital_id.toString() : "",
+          fecha_nacimiento:
+            alumnoData.fecha_nacimiento && !isNaN(new Date(alumnoData.fecha_nacimiento))
+              ? new Date(alumnoData.fecha_nacimiento).toISOString().split("T")[0]
+              : "",
+          promocion: alumnoData.promocion ? alumnoData.promocion.toString() : "",
+          sede: alumnoData.sede || "",
+          documento: alumnoData.documento ? alumnoData.documento.toString() : "",
         })
 
-        setHospitales(hospitalesData)
+        setHospitales(hospitalesData || [])
       } catch (error) {
-        // Reemplazar todas las instancias de console.error
-        // Por ejemplo, cambiar:
-        // console.error("Error cargando datos:", error)
-        // a:
-        // logger.error("Error cargando datos:", error)
         logger.error("Error cargando datos:", error)
         toast({
           title: "Error",
@@ -79,7 +89,16 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
       }
     }
 
-    cargarDatos()
+    if (!isNaN(id)) {
+      cargarDatos()
+    } else {
+      toast({
+        title: "Error",
+        description: "ID de alumno inválido.",
+        variant: "destructive",
+      })
+      router.push("/alumnos")
+    }
   }, [id, router, toast])
 
   const handleGuardar = async () => {
@@ -93,7 +112,13 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(alumno),
+        body: JSON.stringify({
+          ...alumno,
+          hospital_id: alumno.hospital_id ? Number.parseInt(alumno.hospital_id) : null,
+          promocion: alumno.promocion ? Number.parseInt(alumno.promocion) : null,
+          documento: alumno.documento ? Number.parseInt(alumno.documento) : null,
+          fecha_nacimiento: alumno.fecha_nacimiento || null,
+        }),
       })
 
       if (!response.ok) throw new Error("Error al actualizar el alumno")
@@ -193,7 +218,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
               <Label htmlFor="hospital">Hospital</Label>
               <Select
                 value={alumno.hospital_id?.toString() || ""}
-                onValueChange={(value) => setAlumno({ ...alumno, hospital_id: Number.parseInt(value) })}
+                onValueChange={(value) => setAlumno({ ...alumno, hospital_id: value })}
               >
                 <SelectTrigger id="hospital">
                   <SelectValue placeholder="Seleccionar hospital" />
@@ -206,6 +231,41 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fecha_nacimiento">Fecha de Nacimiento</Label>
+              <Input
+                id="fecha_nacimiento"
+                type="date"
+                value={alumno.fecha_nacimiento}
+                onChange={(e) => setAlumno({ ...alumno, fecha_nacimiento: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="promocion">Promoción</Label>
+              <Input
+                id="promocion"
+                type="number"
+                value={alumno.promocion}
+                onChange={(e) => setAlumno({ ...alumno, promocion: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sede">Sede</Label>
+              <Input
+                id="sede"
+                value={alumno.sede}
+                onChange={(e) => setAlumno({ ...alumno, sede: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="documento">Documento</Label>
+              <Input
+                id="documento"
+                type="number"
+                value={alumno.documento}
+                onChange={(e) => setAlumno({ ...alumno, documento: e.target.value })}
+              />
             </div>
           </div>
         </CardContent>
