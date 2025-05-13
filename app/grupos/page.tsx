@@ -1,3 +1,53 @@
+
+/**
+ * Página principal para la gestión de grupos en la aplicación.
+ *
+ * Esta página permite a los usuarios visualizar, buscar, filtrar, actualizar y eliminar grupos.
+ * Además, proporciona acceso a la creación de nuevos grupos y a los detalles de cada grupo.
+ *
+ * ## Funcionalidades principales:
+ * - **Visualización de grupos**: Muestra una lista de grupos con información básica como nombre, descripción,
+ *   estado (activo/inactivo), cantidad de alumnos y fecha de creación.
+ * - **Búsqueda**: Permite buscar grupos por nombre o descripción utilizando un campo de texto.
+ * - **Filtrado por estado**: Los usuarios pueden filtrar los grupos por estado (activos, inactivos o todos).
+ * - **Actualización de datos**: Incluye un botón para recargar la lista de grupos desde el servidor.
+ * - **Eliminación de grupos**: Los usuarios pueden eliminar grupos, siempre que no tengan alumnos asignados.
+ * - **Navegación**: Los usuarios pueden acceder a los detalles de un grupo o a la página para crear un nuevo grupo.
+ *
+ * ## Componentes utilizados:
+ * - **UI Components**: Utiliza componentes personalizados como `Button`, `Card`, `Input`, `Select`, `HoverCard`, y más,
+ *   para construir una interfaz de usuario consistente y accesible.
+ * - **Icons**: Usa íconos de la librería `lucide-react` para mejorar la experiencia visual.
+ * - **Toast Notifications**: Muestra notificaciones para informar al usuario sobre errores, éxitos o advertencias.
+ *
+ * ## Estado de la página:
+ * - `grupos`: Lista de grupos obtenida desde el servidor.
+ * - `searchTerm`: Término de búsqueda ingresado por el usuario.
+ * - `statusFilter`: Filtro de estado seleccionado por el usuario (todos, activos, inactivos).
+ * - `isLoading`: Indica si los datos están siendo cargados desde el servidor.
+ * - `error`: Mensaje de error en caso de que ocurra un problema al cargar los datos.
+ *
+ * ## Funciones principales:
+ * - `cargarGrupos`: Realiza una solicitud al servidor para obtener la lista de grupos.
+ * - `handleEliminar`: Elimina un grupo específico si no tiene alumnos asignados.
+ * - `formatFechaOTexto`: Formatea una fecha o devuelve un texto alternativo si la fecha no está disponible.
+ *
+ * ## Comportamiento:
+ * - Al cargar la página, se ejecuta `cargarGrupos` para obtener los datos iniciales.
+ * - Los usuarios pueden interactuar con los filtros y el campo de búsqueda para ajustar la lista de grupos mostrada.
+ * - Los errores se manejan mostrando mensajes en un componente `Card` y mediante notificaciones.
+ *
+ * ## Navegación:
+ * - Botón "Nuevo Grupo": Redirige a la página `/grupos/new` para crear un nuevo grupo.
+ * - Al hacer clic en un grupo, se redirige a la página de detalles del grupo correspondiente (`/grupos/:id`).
+ *
+ * ## Restricciones:
+ * - Los grupos con alumnos asignados no pueden ser eliminados. Esto se indica visualmente y con un mensaje en un `HoverCard`.
+ *
+ * ## Notas adicionales:
+ * - La página utiliza la API de grupos (`/api/grupos`) para obtener, eliminar y gestionar los datos.
+ * - Se asegura de que las solicitudes no se almacenen en caché configurando los encabezados HTTP correspondientes.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

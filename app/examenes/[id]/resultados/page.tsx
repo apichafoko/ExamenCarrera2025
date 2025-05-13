@@ -1,4 +1,53 @@
+
+
+/**
+ * Página de resultados de un examen específico.
+ *
+ * Esta página muestra los resultados detallados de un examen, incluyendo estadísticas generales,
+ * resultados individuales por alumno y un desglose por estaciones del examen.
+ *
+ * ## Comportamiento principal:
+ * - Obtiene el ID del examen desde los parámetros de la URL (`params.id`).
+ * - Busca los resultados del examen en el contexto global (`useAppContext`).
+ * - Si no se encuentran resultados para el ID proporcionado, redirige al usuario a la lista de exámenes (`/examenes`).
+ * - Muestra un estado de carga mientras se obtienen los datos.
+ *
+ * ## Secciones principales:
+ * 1. **Encabezado de la página**:
+ *    - Botón para regresar a la página del examen.
+ *    - Título del examen y fecha.
+ *    - Botón para exportar los resultados.
+ *
+ * 2. **Estadísticas generales**:
+ *    - Número de alumnos evaluados.
+ *    - Calificación promedio de los alumnos completados.
+ *    - Número de evaluaciones pendientes.
+ *
+ * 3. **Tabla de resultados por alumno**:
+ *    - Muestra el nombre del alumno, estado de la evaluación, calificación, evaluador asignado y un botón para ver detalles.
+ *    - Las calificaciones se colorean según el rango (verde, azul, amarillo, rojo).
+ *    - Si el estado del alumno es "Pendiente", el botón de detalles está deshabilitado.
+ *
+ * 4. **Pestañas de estadísticas**:
+ *    - **Estadísticas Generales**:
+ *      - Placeholder para un gráfico de distribución de calificaciones.
+ *    - **Resultados por Estación**:
+ *      - Tabla con el rendimiento promedio, calificación más alta y más baja por estación del examen.
+ *
+ * ## Dependencias:
+ * - `useRouter`: Para manejar la navegación entre páginas.
+ * - `useAppContext`: Para acceder a los resultados almacenados en el contexto global.
+ * - Componentes de UI como `Button`, `Card`, `Table`, `Tabs`, etc., para estructurar y estilizar la página.
+ *
+ * ## Props:
+ * @param params.id - ID del examen obtenido desde la URL.
+ *
+ * ## Notas:
+ * - Asegúrate de que el contexto global (`useAppContext`) contenga los resultados del examen en el formato esperado.
+ * - Si se agregan nuevas estaciones o métricas, actualiza las tablas y estadísticas correspondientes.
+ */
 "use client"
+
 
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"

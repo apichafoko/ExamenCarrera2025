@@ -1,3 +1,60 @@
+
+/**
+ * Página de detalle de un hospital en la aplicación.
+ *
+ * Esta página muestra información detallada de un hospital específico, incluyendo
+ * su dirección, contacto, tipo, y la lista de alumnos asignados. También permite
+ * realizar acciones como editar el hospital o navegar de regreso a la lista de hospitales.
+ *
+ * ## Funcionalidad principal:
+ * - **Carga de datos**: Al cargar la página, se realiza una solicitud a la API para obtener
+ *   los datos del hospital y los alumnos asignados. Si ocurre un error durante la carga,
+ *   se muestra un mensaje de error con la opción de reintentar.
+ * - **Estados de carga**: La página maneja tres estados principales:
+ *   1. **Cargando**: Muestra un indicador de carga mientras se obtienen los datos.
+ *   2. **Error**: Muestra un mensaje de error si ocurre un problema al cargar los datos.
+ *   3. **Datos cargados**: Muestra la información del hospital y los alumnos asignados.
+ * - **Navegación**: Incluye un botón para regresar a la página anterior y un enlace para
+ *   editar los datos del hospital.
+ * - **Tabs**: Utiliza pestañas para alternar entre la información del hospital y la lista
+ *   de alumnos asignados.
+ *
+ * ## Componentes principales:
+ * - **Información del hospital**: Muestra detalles como dirección, contacto, tipo, y el
+ *   número total de alumnos asignados.
+ * - **Lista de alumnos**: Muestra una tabla con los alumnos asignados al hospital, incluyendo
+ *   su nombre, apellido, y documento. Cada alumno tiene un enlace para ver más detalles.
+ * - **Botones de acción**:
+ *   - Botón para regresar a la página anterior.
+ *   - Botón para editar los datos del hospital.
+ *   - Botón para reintentar la carga de datos en caso de error.
+ *
+ * ## Props y estados:
+ * - **Estados**:
+ *   - `hospital`: Almacena los datos del hospital cargados desde la API.
+ *   - `alumnos`: Almacena la lista de alumnos asignados al hospital.
+ *   - `isLoading`: Indica si los datos están siendo cargados.
+ *   - `error`: Almacena el mensaje de error en caso de que ocurra un problema al cargar los datos.
+ * - **Hooks**:
+ *   - `useParams`: Obtiene el parámetro `id` de la URL para identificar el hospital.
+ *   - `useRouter`: Proporciona funciones de navegación como `router.back()` y `router.push()`.
+ *   - `useToast`: Muestra notificaciones en caso de error.
+ *
+ * ## API Endpoints:
+ * - `/api/hospitales/:id`: Obtiene los datos del hospital.
+ * - `/api/hospitales/:id/alumnos`: Obtiene la lista de alumnos asignados al hospital.
+ *
+ * ## Consideraciones:
+ * - Se implementa manejo de errores para mostrar mensajes claros al usuario en caso de fallos
+ *   en las solicitudes a la API.
+ * - Se utiliza `no-cache` en los encabezados de las solicitudes para garantizar que los datos
+ *   sean siempre frescos.
+ *
+ * ## Ejemplo de uso:
+ * Esta página es útil para mostrar información detallada de un hospital y gestionar los alumnos
+ * asignados. Puede ser extendida para incluir más funcionalidades como eliminar alumnos o
+ * asignar nuevos alumnos al hospital.
+ */
 "use client"
 
 import { useEffect, useState } from "react"

@@ -1,3 +1,68 @@
+
+/**
+ * Página para la creación de un nuevo grupo de alumnos.
+ *
+ * Esta página permite al usuario crear un grupo, asignarle un nombre, una fecha
+ * y seleccionar alumnos que formarán parte del grupo. Los alumnos disponibles
+ * se cargan desde una API y se pueden mover entre dos listas: "Alumnos disponibles"
+ * y "Alumnos seleccionados". También incluye validaciones y manejo de errores
+ * para garantizar que los datos sean correctos antes de enviarlos al servidor.
+ *
+ * ## Funcionalidades principales:
+ *
+ * - **Carga de datos iniciales**:
+ *   - Se realiza una solicitud a la API `/api/alumnos` para obtener la lista de alumnos disponibles.
+ *   - Los alumnos se ordenan alfabéticamente por nombre y apellido.
+ *   - Se muestra un indicador de carga mientras se obtienen los datos.
+ *
+ * - **Formulario de creación del grupo**:
+ *   - El usuario puede ingresar el nombre del grupo y una fecha.
+ *   - Validaciones:
+ *     - El nombre del grupo es obligatorio.
+ *     - Debe haber al menos un alumno seleccionado para guardar el grupo.
+ *
+ * - **Gestión de alumnos**:
+ *   - Los alumnos se dividen en dos listas:
+ *     1. **Alumnos disponibles**: Lista de alumnos que aún no han sido seleccionados.
+ *     2. **Alumnos seleccionados**: Lista de alumnos que formarán parte del grupo.
+ *   - Los alumnos se pueden mover entre las listas utilizando botones de acción.
+ *   - Ambas listas incluyen un campo de búsqueda para filtrar alumnos por nombre, apellido o email.
+ *
+ * - **Guardar grupo**:
+ *   - Al presionar el botón "Guardar Grupo", se valida la información ingresada.
+ *   - Si los datos son válidos, se envían a la API `/api/grupos` mediante una solicitud POST.
+ *   - En caso de éxito, se muestra un mensaje de confirmación y se redirige al usuario a la página de grupos.
+ *   - En caso de error, se muestra un mensaje descriptivo del problema.
+ *
+ * ## Componentes utilizados:
+ *
+ * - **UI Components**:
+ *   - `Button`, `Card`, `Input`, `Label`, `ScrollArea`: Componentes reutilizables para la interfaz de usuario.
+ * - **Icons**:
+ *   - `ArrowLeft`, `Save`, `Loader2`, `ArrowRightCircle`, `ArrowLeftCircle`, `Users`, `Search`: Íconos para mejorar la experiencia visual.
+ * - **Toast Notifications**:
+ *   - Se utiliza `useToast` para mostrar mensajes de error, éxito o advertencia al usuario.
+ *
+ * ## Estados principales:
+ *
+ * - `isLoading`: Indica si se está procesando la solicitud para guardar el grupo.
+ * - `isDataLoading`: Indica si los datos iniciales (alumnos) están cargando.
+ * - `grupo`: Objeto que contiene los datos del grupo (nombre y fecha).
+ * - `alumnosDisponibles`: Lista de alumnos que aún no han sido seleccionados.
+ * - `alumnosSeleccionados`: Lista de alumnos que formarán parte del grupo.
+ * - `searchTermDisponibles`: Término de búsqueda para filtrar alumnos disponibles.
+ * - `searchTermSeleccionados`: Término de búsqueda para filtrar alumnos seleccionados.
+ *
+ * ## Manejo de errores:
+ *
+ * - Si ocurre un error al cargar los alumnos, se muestra un mensaje de error y se registra en el logger.
+ * - Si ocurre un error al guardar el grupo, se muestra un mensaje descriptivo y se registra en el logger.
+ *
+ * ## Navegación:
+ *
+ * - El botón de retroceso permite regresar a la página de grupos (`/grupos`).
+ * - Después de guardar exitosamente un grupo, el usuario es redirigido automáticamente a `/grupos`.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

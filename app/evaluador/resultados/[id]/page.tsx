@@ -1,4 +1,62 @@
+
+
+/**
+ * Página de Resultados de Evaluación
+ *
+ * Esta página muestra los resultados detallados de una evaluación específica para un alumno.
+ * Utiliza el ID de la evaluación proporcionado en los parámetros de la URL para obtener los datos
+ * desde una API y renderizar la información correspondiente.
+ *
+ * ## Funcionalidad Principal
+ * - **Carga de Datos:** Realiza una solicitud a la API para obtener los resultados de la evaluación
+ *   utilizando el ID proporcionado en los parámetros.
+ * - **Manejo de Estados:** Muestra diferentes estados de la página dependiendo de si los datos están
+ *   cargando, si ocurrió un error, o si los datos se cargaron correctamente.
+ * - **Visualización de Resultados:** Presenta información detallada sobre la evaluación, incluyendo:
+ *   - Información del alumno y del evaluador.
+ *   - Fechas de inicio y fin de la evaluación.
+ *   - Puntuación total y porcentaje obtenido.
+ *   - Resultados por estación del examen.
+ *   - Detalle de preguntas y respuestas.
+ * - **Interactividad:** Permite al usuario regresar a la página anterior mediante un botón.
+ *
+ * ## Componentes Utilizados
+ * - **UI Components:** Utiliza componentes personalizados como `Card`, `Button`, `Badge`, `Tabs`,
+ *   y `Progress` para estructurar y estilizar la interfaz.
+ * - **Icons:** Usa íconos de la librería `lucide-react` para mejorar la experiencia visual.
+ * - **Toast Notifications:** Muestra notificaciones en caso de errores al cargar los datos.
+ *
+ * ## Lógica de Carga de Datos
+ * - Se utiliza un `useEffect` para realizar la solicitud a la API cuando el componente se monta.
+ * - Los datos se almacenan en estados locales (`loading`, `error`, `evaluacion`) para controlar
+ *   el flujo de la interfaz.
+ * - En caso de error, se muestra un mensaje descriptivo y se registra el error en el logger.
+ *
+ * ## Cálculo de Estadísticas
+ * - Calcula el porcentaje de puntuación obtenido en base al puntaje total y el puntaje máximo.
+ * - Determina si el alumno aprobó o no la evaluación en base a un umbral del 70%.
+ *
+ * ## Secciones de la Página
+ * - **Información General:** Muestra datos básicos del alumno, evaluador, y tiempos de la evaluación.
+ * - **Resultado Final:** Presenta el porcentaje obtenido, la puntuación total, y el estado de aprobación.
+ * - **Resultados por Estación:** Desglosa las calificaciones obtenidas en cada estación del examen.
+ * - **Detalle de Respuestas:** Muestra cada pregunta, la respuesta del alumno, y comentarios adicionales.
+ *
+ * ## Consideraciones
+ * - Si no se encuentran resultados para la evaluación, se muestra un mensaje indicando que no hay datos disponibles.
+ * - La página está diseñada para manejar errores de red o problemas con la API de manera elegante.
+ *
+ * ## Dependencias
+ * - `next/navigation`: Para manejar la navegación entre páginas.
+ * - `@/components/ui`: Componentes personalizados para la interfaz de usuario.
+ * - `@/lib/logger`: Para registrar mensajes de depuración y errores.
+ *
+ * @param params - Parámetros de la URL, incluyendo el ID de la evaluación.
+ * @returns La página renderizada con los resultados de la evaluación.
+ */
 "use client"
+
+
 
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"

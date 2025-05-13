@@ -1,3 +1,55 @@
+
+
+/**
+ * Página de Asignación de Identificación.
+ *
+ * Esta página permite a los administradores y colaboradores asignar números de identificación
+ * a los alumnos para los exámenes. Los usuarios pueden seleccionar una fecha de examen y ver
+ * la lista de alumnos asignados a esa fecha. También pueden actualizar la lista de alumnos
+ * después de realizar asignaciones.
+ *
+ * ## Comportamiento principal:
+ * - **Autorización**: Solo los usuarios con permisos de administrador o colaborador pueden acceder
+ *   a esta página. Si un usuario no tiene permisos, es redirigido a la página principal (`/`).
+ * - **Carga de fechas**: Al montar el componente, se realiza una solicitud a la API para obtener
+ *   las fechas de los exámenes disponibles. Estas fechas se muestran en un menú desplegable.
+ * - **Selección de fecha**: Al seleccionar una fecha, se realiza una solicitud a la API para obtener
+ *   la lista de alumnos asignados a esa fecha.
+ * - **Actualización de alumnos**: Después de asignar un número de identificación a un alumno,
+ *   la lista de alumnos se actualiza automáticamente.
+ *
+ * ## Componentes utilizados:
+ * - **Select**: Componente para seleccionar una fecha de examen.
+ * - **Card**: Contenedor para mostrar la selección de fecha.
+ * - **Alert**: Muestra errores en caso de fallos al cargar las fechas o los alumnos.
+ * - **Skeleton**: Indicador de carga mientras se obtienen los datos de la API.
+ * - **AsignacionIdentificacionTable**: Tabla que muestra la lista de alumnos asignados a la fecha seleccionada.
+ *
+ * ## Estado:
+ * - `fechas`: Lista de fechas de exámenes disponibles.
+ * - `selectedFecha`: Fecha seleccionada por el usuario.
+ * - `alumnos`: Lista de alumnos asignados a la fecha seleccionada.
+ * - `loading`: Indica si las fechas de exámenes están cargando.
+ * - `loadingAlumnos`: Indica si los alumnos están cargando.
+ * - `error`: Mensaje de error en caso de fallos al cargar datos.
+ *
+ * ## API Endpoints:
+ * - `/api/asignacion/fechas`: Devuelve las fechas de exámenes disponibles.
+ * - `/api/asignacion/alumnos`: Devuelve la lista de alumnos asignados a una fecha específica.
+ *
+ * ## Flujo de trabajo:
+ * 1. Al montar el componente, se verifica si el usuario tiene permisos para acceder.
+ * 2. Se cargan las fechas de exámenes desde la API.
+ * 3. El usuario selecciona una fecha, y se cargan los alumnos asignados a esa fecha.
+ * 4. Después de asignar un número de identificación, la lista de alumnos se actualiza automáticamente.
+ *
+ * ## Errores:
+ * - Si ocurre un error al cargar las fechas o los alumnos, se muestra un mensaje de error en un componente `Alert`.
+ *
+ * ## Notas:
+ * - Se utiliza un timestamp en las solicitudes a la API para evitar problemas de caché.
+ * - La página está diseñada para ser responsiva y utiliza clases de Tailwind CSS para el diseño.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

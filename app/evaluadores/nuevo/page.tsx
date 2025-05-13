@@ -1,4 +1,40 @@
+
+/**
+ * Página para la creación de un nuevo evaluador.
+ *
+ * Esta página permite a los usuarios crear un nuevo evaluador para los exámenes.
+ * Incluye un formulario con campos para capturar información básica del evaluador,
+ * como nombre, apellido, correo electrónico, especialidad y estado (activo/inactivo).
+ *
+ * ## Funcionalidad principal:
+ * - Validación de campos obligatorios: nombre, apellido y correo electrónico.
+ * - Envío de datos a la API para crear un nuevo evaluador.
+ * - Indicador de carga mientras se procesa la solicitud.
+ * - Notificaciones de éxito o error al usuario.
+ * - Redirección automática a la lista de evaluadores después de crear un evaluador exitosamente.
+ *
+ * ## Componentes utilizados:
+ * - `Button`: Botones para acciones como guardar o regresar.
+ * - `Card`: Contenedor estilizado para el formulario.
+ * - `Input`: Campos de entrada para capturar datos del evaluador.
+ * - `Label`: Etiquetas descriptivas para los campos del formulario.
+ * - `Switch`: Componente para alternar el estado activo/inactivo del evaluador.
+ * - `useToast`: Hook para mostrar notificaciones al usuario.
+ *
+ * ## Flujo de trabajo:
+ * 1. El usuario completa los campos del formulario.
+ * 2. Al hacer clic en "Guardar Evaluador", se valida que los campos obligatorios estén completos.
+ * 3. Si la validación es exitosa, se envían los datos a la API mediante una solicitud `POST`.
+ * 4. Si la creación es exitosa, se muestra una notificación de éxito y se redirige al usuario.
+ * 5. Si ocurre un error, se muestra una notificación con el mensaje de error.
+ *
+ * ## Notas adicionales:
+ * - El estado de carga (`isLoading`) desactiva el botón de guardar para evitar múltiples envíos.
+ * - El componente utiliza el hook `useRouter` de Next.js para manejar la navegación.
+ * - La estructura del formulario está diseñada para ser responsiva, con soporte para pantallas pequeñas y grandes.
+ */
 "use client"
+
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"

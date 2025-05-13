@@ -1,3 +1,81 @@
+
+
+/**
+ * Página para asignar exámenes a alumnos o grupos.
+ *
+ * Esta página permite a los usuarios seleccionar exámenes activos y asignarlos
+ * a alumnos individuales o a grupos completos. Proporciona una interfaz interactiva
+ * para gestionar las asignaciones de manera eficiente.
+ *
+ * ## Funcionalidades principales:
+ *
+ * - **Cargar datos iniciales**: Obtiene la lista de exámenes activos, alumnos y grupos
+ *   desde la API al cargar la página.
+ * - **Filtrar y buscar alumnos**: Permite buscar alumnos por nombre, apellido o correo electrónico.
+ * - **Agrupar exámenes por fecha**: Los exámenes se agrupan por fecha de aplicación para facilitar
+ *   la selección.
+ * - **Asignar exámenes a alumnos**: Los usuarios pueden seleccionar uno o más alumnos y asignarles
+ *   exámenes específicos.
+ * - **Asignar exámenes a grupos**: Los usuarios pueden seleccionar un grupo y asignar exámenes
+ *   a todos los alumnos del grupo.
+ * - **Validaciones**: Se asegura de que los exámenes tengan evaluadores asignados antes de permitir
+ *   la asignación. También valida que se seleccionen alumnos o grupos antes de proceder.
+ * - **Mensajes de error y éxito**: Utiliza un sistema de notificaciones para informar al usuario
+ *   sobre el resultado de las asignaciones, errores o advertencias.
+ *
+ * ## Componentes principales:
+ *
+ * - **`AsignarExamenContent`**:
+ *   - Componente principal que contiene toda la lógica y la interfaz de usuario.
+ *   - Maneja el estado de la página, como los exámenes seleccionados, los alumnos seleccionados,
+ *     el grupo seleccionado, y los datos cargados desde la API.
+ *   - Implementa funciones para asignar exámenes a alumnos o grupos, manejar errores y mostrar
+ *     notificaciones.
+ *
+ * - **`AsignarExamenPage`**:
+ *   - Componente que envuelve el contenido principal en un `Suspense` para manejar la carga inicial.
+ *
+ * ## Flujo de trabajo:
+ *
+ * 1. **Carga inicial**:
+ *    - Se obtienen los datos de exámenes, alumnos y grupos desde la API.
+ *    - Se filtran los exámenes activos y se ordenan los alumnos alfabéticamente.
+ *
+ * 2. **Selección de exámenes**:
+ *    - Los exámenes se agrupan por fecha de aplicación y se muestran en un `Accordion`.
+ *    - Los usuarios pueden seleccionar uno o más exámenes para asignar.
+ *
+ * 3. **Asignación a alumnos**:
+ *    - Los usuarios pueden buscar y seleccionar alumnos específicos.
+ *    - Los exámenes seleccionados se asignan a los alumnos seleccionados.
+ *
+ * 4. **Asignación a grupos**:
+ *    - Los usuarios pueden seleccionar un grupo y ver la lista de alumnos del grupo.
+ *    - Los exámenes seleccionados se asignan a todos los alumnos del grupo.
+ *
+ * 5. **Notificaciones**:
+ *    - Se muestran notificaciones para informar al usuario sobre el éxito o los errores
+ *      durante la asignación.
+ *
+ * ## Consideraciones:
+ *
+ * - La página maneja errores de red y muestra mensajes claros al usuario en caso de fallos.
+ * - Se asegura de que los exámenes tengan evaluadores asignados antes de permitir la asignación.
+ * - Los datos se actualizan dinámicamente al cambiar entre alumnos y grupos.
+ *
+ * ## Dependencias:
+ *
+ * - **Componentes UI**: Utiliza componentes personalizados como `Button`, `Card`, `Tabs`, `Accordion`,
+ *   `Checkbox`, y `Select` para construir la interfaz.
+ * - **API**: Realiza llamadas a endpoints como `/api/examenes`, `/api/alumnos`, `/api/grupos` y
+ *   `/api/alumnos-examenes` para gestionar los datos.
+ * - **Toast**: Utiliza el sistema de notificaciones para mostrar mensajes al usuario.
+ *
+ * ## Uso:
+ *
+ * Esta página está diseñada para ser utilizada por administradores o evaluadores que necesiten
+ * asignar exámenes a alumnos o grupos de manera rápida y eficiente.
+ */
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"

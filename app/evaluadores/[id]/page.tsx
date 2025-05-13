@@ -1,3 +1,47 @@
+
+/**
+ * Página de detalle de un evaluador en el sistema.
+ *
+ * Esta página muestra información detallada de un evaluador específico, incluyendo
+ * su información personal y los exámenes habilitados que puede tomar. También permite
+ * navegar hacia la edición del evaluador o regresar a la lista de evaluadores.
+ *
+ * ## Comportamiento principal:
+ * - Obtiene el ID del evaluador desde los parámetros de la URL.
+ * - Realiza una solicitud a la API para obtener los datos del evaluador y los exámenes habilitados.
+ * - Muestra un estado de carga mientras se obtienen los datos.
+ * - Maneja errores en caso de que no se puedan cargar los datos del evaluador o los exámenes.
+ *
+ * ## Componentes principales:
+ * - **Información Personal**: Muestra el nombre, email y especialidad del evaluador.
+ * - **Exámenes Habilitados**: Lista de exámenes que el evaluador puede tomar, con opciones para ver detalles.
+ * - **Botones de Navegación**:
+ *   - Botón para regresar a la lista de evaluadores.
+ *   - Botón para editar la información del evaluador.
+ *
+ * ## Estados:
+ * - `isLoading`: Indica si los datos están siendo cargados.
+ * - `error`: Contiene el mensaje de error en caso de que ocurra un problema al cargar los datos.
+ * - `evaluador`: Almacena los datos del evaluador obtenidos de la API.
+ * - `examenesEvaluador`: Almacena la lista de exámenes habilitados para el evaluador.
+ *
+ * ## API Endpoints:
+ * - `/api/evaluadores/{id}`: Obtiene los datos del evaluador.
+ * - `/api/evaluadores/{id}/examenes`: Obtiene los exámenes habilitados para el evaluador.
+ *
+ * ## Dependencias:
+ * - **useRouter**: Para manejar la navegación entre páginas.
+ * - **useToast**: Para mostrar notificaciones en caso de errores.
+ * - **useEffect**: Para realizar las solicitudes a la API al cargar la página.
+ *
+ * ## Ejemplo de uso:
+ * Esta página es útil para administradores o usuarios que necesitan consultar
+ * información detallada de un evaluador y los exámenes que tiene asignados.
+ *
+ * ## Notas:
+ * - Si el ID del evaluador no es válido o no se encuentra, se muestra un mensaje de error.
+ * - Si no hay exámenes habilitados, se muestra un mensaje indicando que no hay exámenes disponibles.
+ */
 "use client"
 
 import { useRouter } from "next/navigation"

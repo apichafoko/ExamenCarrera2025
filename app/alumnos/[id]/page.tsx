@@ -1,3 +1,66 @@
+/**
+ * Página de detalle de un alumno en una aplicación Next.js.
+ * 
+ * Esta página muestra información detallada de un alumno, incluyendo datos personales,
+ * exámenes asignados y opciones para editar o asignar nuevos exámenes. También permite
+ * recargar los datos del alumno desde el servidor.
+ * 
+ * @component
+ * 
+ * @param {Object} props - Propiedades del componente.
+ * @param {Promise<{ id: string }>} props.params - Parámetros de la ruta, incluyendo el ID del alumno.
+ * 
+ * @returns {JSX.Element} Página de detalle del alumno.
+ * 
+ * ## Funcionalidades principales:
+ * 
+ * - **Carga de datos del alumno:** 
+ *   Utiliza el ID proporcionado en los parámetros de la ruta para obtener los datos del alumno desde una API.
+ *   Si el ID es inválido o no se encuentra el alumno, redirige a la lista de alumnos.
+ * 
+ * - **Manejo de errores:**
+ *   Muestra mensajes de error utilizando un sistema de notificaciones (`toast`) en caso de problemas al cargar los datos.
+ * 
+ * - **Recarga de datos:**
+ *   Permite recargar manualmente los datos del alumno desde el servidor mediante un botón de "Actualizar".
+ * 
+ * - **Interfaz de usuario:**
+ *   - Muestra información personal del alumno, como nombre, email, teléfono, fecha de nacimiento, etc.
+ *   - Lista los exámenes asignados al alumno, incluyendo su estado y fecha.
+ *   - Proporciona botones para editar la información del alumno o asignar nuevos exámenes.
+ * 
+ * - **Formato de datos:**
+ *   Incluye una función para formatear fechas (`formatFechaOTexto`) y mostrar un texto alternativo si no hay datos disponibles.
+ * 
+ * ## Estados del componente:
+ * 
+ * - `alumno`: Contiene los datos del alumno cargados desde la API.
+ * - `isLoading`: Indica si los datos del alumno están siendo cargados.
+ * - `isRefreshing`: Indica si los datos están siendo recargados manualmente.
+ * 
+ * ## Hooks utilizados:
+ * 
+ * - `useEffect`: Carga los datos del alumno al montar el componente o cuando cambia el ID.
+ * - `useState`: Maneja los estados locales del componente.
+ * - `useRouter`: Permite la navegación programática entre páginas.
+ * - `useToast`: Muestra notificaciones al usuario.
+ * 
+ * ## Componentes externos utilizados:
+ * 
+ * - **UI Components:** 
+ *   - `Button`, `Card`, `Table`, `Badge`, etc., para construir la interfaz de usuario.
+ * - **Icons:** 
+ *   - Iconos de la librería `lucide-react` para mejorar la experiencia visual.
+ * 
+ * ## Flujo principal:
+ * 
+ * 1. Obtiene el ID del alumno desde los parámetros de la ruta.
+ * 2. Valida el ID y carga los datos del alumno desde la API.
+ * 3. Muestra un spinner mientras los datos están cargando.
+ * 4. Si los datos se cargan correctamente, renderiza la información del alumno y los exámenes asignados.
+ * 5. Si ocurre un error, muestra un mensaje y redirige a la lista de alumnos.
+ * 6. Permite recargar los datos o navegar a otras páginas relacionadas (editar, asignar exámenes).
+ */
 "use client"
 
 import { useRouter } from "next/navigation"

@@ -1,3 +1,49 @@
+
+/**
+ * Página para tomar un examen en el sistema de evaluación.
+ *
+ * Esta página permite a un evaluador gestionar el proceso de evaluación de un examen asignado a un alumno.
+ * Incluye funcionalidades para cargar el examen, navegar entre preguntas y estaciones, guardar respuestas,
+ * calcular el progreso y finalizar el examen.
+ *
+ * ## Funcionalidades principales:
+ * - **Carga del examen**: Se obtiene la información del examen desde el backend utilizando el `ID` proporcionado
+ *   en los parámetros de la URL. Si el examen está en estado "Pendiente", se inicializa automáticamente.
+ * - **Navegación**: Permite avanzar y retroceder entre preguntas y estaciones. Verifica que todas las preguntas
+ *   de una estación estén respondidas antes de permitir avanzar.
+ * - **Guardado de respuestas**: Las respuestas se pueden guardar individualmente o en lote antes de finalizar el examen.
+ * - **Finalización del examen**: Una vez respondidas todas las preguntas, el evaluador puede finalizar el examen,
+ *   lo que actualiza su estado en el backend.
+ * - **Progreso**: Calcula y muestra el porcentaje de preguntas respondidas en tiempo real.
+ * - **Alertas**: Muestra advertencias si el evaluador intenta avanzar sin completar todas las preguntas de una estación.
+ *
+ * ## Componentes utilizados:
+ * - **UI Components**: Se utilizan componentes personalizados como `Card`, `Button`, `Textarea`, `Input`, `RadioGroup`,
+ *   `Checkbox`, `Tabs`, y `Progress` para construir la interfaz de usuario.
+ * - **Toast Notifications**: Se muestran notificaciones para informar al usuario sobre el éxito o error de las acciones.
+ * - **Icons**: Se utilizan íconos de `lucide-react` para mejorar la experiencia visual.
+ *
+ * ## Estados principales:
+ * - `loading`: Indica si los datos del examen están siendo cargados.
+ * - `saving`: Indica si una respuesta o el examen completo está siendo guardado.
+ * - `examen`: Contiene los datos del examen cargado desde el backend.
+ * - `respuestas`, `comentarios`, `puntajes`: Almacenan las respuestas, comentarios y puntajes asignados a cada pregunta.
+ * - `progreso`: Representa el porcentaje de preguntas respondidas.
+ * - `mostrarAlertaEstacionIncompleta`: Controla la visibilidad de la alerta de estación incompleta.
+ *
+ * ## Navegación entre preguntas y estaciones:
+ * - **Siguiente pregunta**: Guarda la respuesta actual y avanza a la siguiente pregunta o estación.
+ * - **Pregunta anterior**: Retrocede a la pregunta anterior o a la última pregunta de la estación anterior.
+ * - **Finalizar examen**: Verifica que todas las preguntas estén respondidas y finaliza el examen.
+ *
+ * ## Manejo de errores:
+ * - Si ocurre un error al cargar el examen, guardar una respuesta o finalizar el examen, se muestra un mensaje
+ *   de error al usuario y se registra en la consola.
+ *
+ * ## Uso:
+ * Esta página está diseñada para ser utilizada por evaluadores que necesitan calificar exámenes asignados a alumnos.
+ * Se accede a través de la ruta `/evaluador/tomar-examen/[id]`, donde `[id]` es el identificador único del examen.
+ */
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"

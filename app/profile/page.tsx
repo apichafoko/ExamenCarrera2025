@@ -1,3 +1,50 @@
+
+/**
+ * Página de perfil de usuario donde se permite a los usuarios visualizar y actualizar
+ * su información personal, incluyendo nombre, correo electrónico y contraseña.
+ *
+ * ## Descripción
+ * Esta página utiliza el contexto de autenticación para obtener la información del usuario
+ * actual y permite modificarla mediante un formulario. Incluye validaciones para asegurar
+ * que la contraseña actual sea correcta antes de realizar cambios en el perfil.
+ *
+ * ## Funcionalidades principales
+ * - Mostrar la información actual del usuario (nombre, correo electrónico).
+ * - Permitir al usuario actualizar su nombre, correo electrónico y contraseña.
+ * - Validar la contraseña actual antes de permitir cambios.
+ * - Forzar al usuario a cerrar sesión después de actualizar su perfil para que inicie
+ *   sesión nuevamente con las credenciales actualizadas.
+ * - Mostrar mensajes de error o éxito mediante un sistema de notificaciones (`toast`).
+ *
+ * ## Componentes utilizados
+ * - `Card`, `CardHeader`, `CardContent`, `CardFooter`: Para estructurar el diseño de la tarjeta del perfil.
+ * - `Avatar`, `AvatarImage`, `AvatarFallback`: Para mostrar un avatar del usuario.
+ * - `Input`, `Label`: Para los campos del formulario.
+ * - `Button`: Para el botón de guardar cambios.
+ * - `Loader2`: Para indicar un estado de carga mientras se procesan los cambios.
+ *
+ * ## Estado local
+ * - `isLoading`: Indica si se está procesando la solicitud de actualización.
+ * - `formData`: Contiene los datos del formulario (nombre, correo electrónico, contraseñas).
+ * - `error`: Almacena mensajes de error en caso de que ocurra un problema.
+ *
+ * ## Flujo de trabajo
+ * 1. El usuario puede ver su información actual precargada en el formulario.
+ * 2. Al enviar el formulario:
+ *    - Se valida la contraseña actual mediante una solicitud a `/api/auth/validate-password`.
+ *    - Si la validación es exitosa, se envían los datos actualizados a `/api/auth/update-profile`.
+ *    - Si la actualización es exitosa, se muestra un mensaje de éxito y se fuerza al usuario
+ *      a cerrar sesión para que vuelva a iniciar sesión con las credenciales actualizadas.
+ *    - Si ocurre un error, se muestra un mensaje de error.
+ *
+ * ## Redirección
+ * - Después de actualizar el perfil, el usuario es redirigido a la página de inicio de sesión (`/login`).
+ *
+ * ## Notas adicionales
+ * - Esta página utiliza el hook `useAuth` para acceder al contexto de autenticación.
+ * - Se utiliza el hook `useToast` para mostrar notificaciones al usuario.
+ * - El diseño es responsivo y está centrado en la pantalla.
+ */
 "use client"
 
 import { CardFooter } from "@/components/ui/card"

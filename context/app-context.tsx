@@ -1,3 +1,99 @@
+
+/**
+ * @file app-context.tsx
+ * 
+ * Este archivo define un contexto global para la aplicación utilizando React Context API.
+ * Proporciona un conjunto de datos y funciones relacionadas con la gestión de alumnos, hospitales,
+ * evaluadores, exámenes y grupos. Este contexto permite que los componentes hijos accedan y manipulen
+ * estos datos de manera centralizada.
+ * 
+ * @module AppContext
+ * 
+ * @example
+ * // Ejemplo de uso del contexto en un componente
+ * import { useAppContext } from "@/context/app-context";
+ * 
+ * const MiComponente = () => {
+ *   const { alumnos, agregarAlumno } = useAppContext();
+ * 
+ *   const handleAgregarAlumno = async () => {
+ *     await agregarAlumno({ nombre: "Nuevo Alumno", edad: 20 });
+ *   };
+ * 
+ *   return (
+ *     <div>
+ *       <h1>Lista de Alumnos</h1>
+ *       <ul>
+ *         {alumnos.map((alumno) => (
+ *           <li key={alumno.id}>{alumno.nombre}</li>
+ *         ))}
+ *       </ul>
+ *       <button onClick={handleAgregarAlumno}>Agregar Alumno</button>
+ *     </div>
+ *   );
+ * };
+ */
+
+/**
+ * Tipo de datos para el contexto de la aplicación.
+ * Contiene los datos principales (alumnos, hospitales, evaluadores, exámenes, grupos)
+ * y las funciones para manipularlos (actualizar, agregar, eliminar, asignar, refrescar).
+ * 
+ * @typedef {Object} AppContextType
+ * @property {Alumno[]} alumnos - Lista de alumnos.
+ * @property {Hospital[]} hospitales - Lista de hospitales.
+ * @property {Evaluador[]} evaluadores - Lista de evaluadores.
+ * @property {Examen[]} examenes - Lista de exámenes.
+ * @property {Grupo[]} grupos - Lista de grupos.
+ * @property {boolean} isLoading - Indica si los datos están cargando.
+ * @property {Function} actualizarAlumno - Actualiza un alumno existente.
+ * @property {Function} actualizarHospital - Actualiza un hospital existente.
+ * @property {Function} actualizarEvaluador - Actualiza un evaluador existente.
+ * @property {Function} actualizarExamen - Actualiza un examen existente.
+ * @property {Function} actualizarGrupo - Actualiza un grupo existente.
+ * @property {Function} agregarAlumno - Agrega un nuevo alumno.
+ * @property {Function} agregarHospital - Agrega un nuevo hospital.
+ * @property {Function} agregarEvaluador - Agrega un nuevo evaluador.
+ * @property {Function} agregarExamen - Agrega un nuevo examen.
+ * @property {Function} agregarGrupo - Agrega un nuevo grupo.
+ * @property {Function} eliminarAlumno - Elimina un alumno por ID.
+ * @property {Function} eliminarHospital - Elimina un hospital por ID.
+ * @property {Function} eliminarEvaluador - Elimina un evaluador por ID.
+ * @property {Function} eliminarExamen - Elimina un examen por ID.
+ * @property {Function} eliminarGrupo - Elimina un grupo por ID.
+ * @property {Function} asignarExamenAlumno - Asigna un examen a un alumno con un evaluador.
+ * @property {Function} asignarAlumnoGrupo - Asigna un alumno a un grupo.
+ * @property {Function} refrescarDatos - Refresca todos los datos desde el servidor.
+ */
+
+/**
+ * Hook personalizado para acceder al contexto de la aplicación.
+ * Lanza un error si se usa fuera de un `AppProvider`.
+ * 
+ * @function useAppContext
+ * @returns {AppContextType} El contexto de la aplicación.
+ * @throws {Error} Si se usa fuera de un `AppProvider`.
+ */
+
+/**
+ * Proveedor del contexto de la aplicación.
+ * Envuelve a los componentes hijos y proporciona acceso al contexto.
+ * 
+ * @function AppProvider
+ * @param {Object} props - Propiedades del componente.
+ * @param {ReactNode} props.children - Componentes hijos que tendrán acceso al contexto.
+ * @returns {JSX.Element} El proveedor del contexto.
+ * 
+ * @example
+ * // Uso del AppProvider en la raíz de la aplicación
+ * import { AppProvider } from "@/context/app-context";
+ * 
+ * const App = () => (
+ *   <AppProvider>
+ *     <MiComponente />
+ *   </AppProvider>
+ * );
+ */
 "use client"
 
 import { createContext, useContext, useState, type ReactNode } from "react"

@@ -1,3 +1,55 @@
+
+/**
+ * Página de "Exámenes Completados" para evaluadores.
+ *
+ * Esta página permite a los evaluadores visualizar una lista de exámenes completados
+ * asignados a su cuenta. Incluye funcionalidades para cargar los exámenes desde la API,
+ * mostrar información relevante sobre cada examen, y navegar a los resultados de un examen específico.
+ *
+ * ## Comportamiento principal:
+ * - Si no hay un usuario autenticado, muestra un mensaje de error.
+ * - Si el usuario autenticado no tiene un ID válido, también muestra un mensaje de error.
+ * - Obtiene el evaluador asociado al usuario autenticado mediante una llamada a la API.
+ * - Carga los exámenes completados del evaluador desde la API, aplicando un filtro por estado ("Completado").
+ * - Muestra un indicador de carga mientras se obtienen los datos.
+ * - Si no hay exámenes completados, muestra un mensaje informativo.
+ * - Si hay exámenes completados, los muestra en una tabla con detalles como el alumno, título del examen, estado, fecha de aplicación y acciones disponibles.
+ *
+ * ## Componentes principales:
+ * - **Card**: Contenedor principal que organiza el contenido de la página.
+ * - **Table**: Muestra la lista de exámenes en formato tabular.
+ * - **Badge**: Indica el estado del examen con un diseño visual distintivo.
+ * - **Button**: Permite navegar a los resultados de un examen específico.
+ * - **Loader2**: Indicador de carga animado que se muestra mientras se obtienen los datos.
+ *
+ * ## Lógica de estado:
+ * - `isLoading`: Indica si los datos están siendo cargados.
+ * - `examenes`: Almacena la lista de exámenes obtenidos de la API.
+ * - `error`: Almacena mensajes de error en caso de que ocurra algún problema durante la carga de datos.
+ *
+ * ## Llamadas a la API:
+ * 1. `/api/evaluadores/by-id?userId=${user.id}`: Obtiene el evaluador asociado al usuario autenticado.
+ * 2. `/api/evaluadores/${evaluador.id}/examenes?estado=${filtroEstado}`: Obtiene los exámenes completados del evaluador.
+ *
+ * ## Navegación:
+ * - Al hacer clic en el botón "Ver Resultados" de un examen, se redirige al usuario a la página de resultados del examen correspondiente.
+ *
+ * ## Errores manejados:
+ * - Si no se encuentra un evaluador para el usuario autenticado, se muestra un mensaje de error.
+ * - Si ocurre un error al obtener los exámenes, se muestra un mensaje de error y se registra en la consola.
+ *
+ * ## Notificaciones:
+ * - Utiliza el sistema de notificaciones (`useToast`) para mostrar mensajes de error en caso de fallos durante la carga de datos.
+ *
+ * ## Diseño:
+ * - Utiliza componentes de UI personalizados como `Card`, `Table`, `Badge` y `Button` para mantener un diseño consistente.
+ * - Incluye íconos de la librería `lucide-react` para mejorar la experiencia visual.
+ *
+ * ## Dependencias:
+ * - `useAuth`: Contexto para obtener información del usuario autenticado.
+ * - `useRouter`: Hook de Next.js para manejar la navegación.
+ * - `useToast`: Hook para mostrar notificaciones.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

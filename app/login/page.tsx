@@ -1,3 +1,38 @@
+/**
+ * Página de inicio de sesión para el Sistema de Evaluación Académica.
+ *
+ * Esta página permite a los usuarios autenticarse ingresando su correo electrónico
+ * y contraseña. Si las credenciales son válidas, el usuario será redirigido a la
+ * página principal del sistema. En caso de error, se mostrarán mensajes de error
+ * específicos utilizando el sistema de notificaciones.
+ *
+ * Componentes principales:
+ * - `Card`: Contenedor principal que organiza el contenido de la página.
+ * - `Input`: Campos de entrada para el correo electrónico y la contraseña.
+ * - `Button`: Botón para enviar el formulario de inicio de sesión.
+ * - `useAuth`: Contexto para manejar la lógica de autenticación.
+ * - `useToast`: Sistema de notificaciones para mostrar mensajes al usuario.
+ *
+ * Funcionalidad:
+ * - El formulario captura los datos de inicio de sesión (correo y contraseña).
+ * - Al enviar el formulario, se llama a la función `login` del contexto de autenticación.
+ * - Si el inicio de sesión es exitoso, se muestra un mensaje de éxito y se redirige al usuario.
+ * - Si ocurre un error, se muestra un mensaje de error específico.
+ *
+ * Estados:
+ * - `isLoading`: Indica si la solicitud de inicio de sesión está en progreso.
+ * - `error`: Almacena mensajes de error para mostrarlos en la interfaz.
+ * - `formData`: Objeto que contiene los valores de los campos del formulario.
+ *
+ * Diseño:
+ * - La página utiliza componentes de interfaz de usuario personalizados para mantener
+ *   consistencia en el diseño.
+ * - Incluye un logo y un ícono representativo del sistema.
+ *
+ * Uso:
+ * - Esta página está diseñada para ser utilizada como la pantalla de inicio de sesión
+ *   principal del sistema.
+ */
 "use client"
 
 import type React from "react"

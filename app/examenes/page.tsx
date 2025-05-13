@@ -1,3 +1,79 @@
+
+/**
+ * Página principal para la gestión de exámenes.
+ *
+ * Esta página permite a los usuarios visualizar, buscar, filtrar y gestionar exámenes
+ * en diferentes estados (activos, inactivos, próximos, recientes, etc.). 
+ * También incluye funcionalidades para actualizar la lista de exámenes y crear nuevos.
+ *
+ * ## Funcionalidades principales:
+ * 
+ * - **Carga de exámenes:** 
+ *   - Se realiza una solicitud a la API `/api/examenes` para obtener la lista de exámenes.
+ *   - Los datos se procesan y se agrupan por fecha para facilitar su visualización.
+ *   - Manejo de errores en caso de fallos en la solicitud.
+ *
+ * - **Búsqueda y filtrado:**
+ *   - Los usuarios pueden buscar exámenes por título o descripción.
+ *   - Los exámenes se pueden filtrar por estado (`activo`, `inactivo`, `todos`).
+ *
+ * - **Tabs de navegación:**
+ *   - **Todos:** Muestra todos los exámenes que coincidan con los criterios de búsqueda y filtro.
+ *   - **Recientes:** Muestra exámenes realizados en los últimos 30 días.
+ *   - **Próximos:** Muestra exámenes programados para fechas futuras.
+ *
+ * - **Visualización de exámenes:**
+ *   - Los exámenes se agrupan por fecha y se muestran en un componente `Accordion`.
+ *   - Cada examen se representa como una tarjeta (`Card`) con información relevante:
+ *     - Título, descripción, estado, fecha de aplicación y cantidad de alumnos asignados.
+ *   - Los usuarios pueden hacer clic en una tarjeta para navegar a los detalles del examen.
+ *
+ * - **Actualización de exámenes:**
+ *   - Botón para recargar la lista de exámenes desde la API.
+ *   - Indicador de carga mientras se realiza la solicitud.
+ *
+ * - **Creación de nuevos exámenes:**
+ *   - Botón para redirigir a la página de creación de un nuevo examen.
+ *
+ * ## Componentes utilizados:
+ * 
+ * - **UI Components:** 
+ *   - `Button`, `Card`, `Input`, `Label`, `Select`, `Tabs`, `Accordion`, `Badge`, etc.
+ *   - Proveen una interfaz consistente y estilizada.
+ * 
+ * - **Íconos:** 
+ *   - `PlusCircle`, `Search`, `Calendar`, `Users`, `RefreshCw`, `Loader2` de `lucide-react`.
+ *   - Usados para mejorar la experiencia visual y la navegación.
+ *
+ * ## Estados y lógica:
+ * 
+ * - **Estados principales:**
+ *   - `examenes`: Lista de exámenes cargados desde la API.
+ *   - `searchTerm`: Término de búsqueda ingresado por el usuario.
+ *   - `statusFilter`: Filtro de estado seleccionado (`activo`, `inactivo`, `todos`).
+ *   - `activeTab`: Tab activo actualmente (`todos`, `recientes`, `proximos`).
+ *   - `isLoading`: Indica si se está cargando la lista de exámenes.
+ *   - `error`: Mensaje de error en caso de fallo al cargar los exámenes.
+ *
+ * - **Funciones clave:**
+ *   - `cargarExamenes`: Carga los exámenes desde la API y maneja errores.
+ *   - `handleTabChange`: Cambia el tab activo y ajusta el filtro de estado.
+ *   - `groupExamsByDate`: Agrupa los exámenes por fecha de aplicación.
+ *   - `renderExamenes`: Renderiza los exámenes agrupados en un componente `Accordion`.
+ *   - `getStatusBadge`: Devuelve un badge estilizado según el estado del examen.
+ *   - `formatFechaOTexto`: Formatea una fecha o devuelve un texto alternativo si no está definida.
+ *
+ * ## Consideraciones:
+ * 
+ * - La página maneja errores de red y muestra mensajes claros al usuario.
+ * - Se asegura de que los datos recibidos de la API tengan el formato esperado.
+ * - Proporciona una experiencia de usuario fluida con indicadores de carga y actualizaciones en tiempo real.
+ *
+ * ## Navegación:
+ * 
+ * - Los usuarios pueden navegar a los detalles de un examen haciendo clic en su tarjeta.
+ * - También pueden acceder a la página de creación de un nuevo examen desde el botón correspondiente.
+ */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -198,17 +274,6 @@ export default function ExamenesPage() {
             </div>
           </AccordionTrigger>
             <AccordionContent className="p-4 border-t">
-              <div className="flex justify-end mt-4" style={{ marginBottom: "1rem" }}>
-                   <Button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setModalOpenForAccordion((prev) => ({ ...prev, [date]: true }))
-                  }}
-                  className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.8)] text-white"
-                >
-                  Duplicar todos los exámenes (Nueva fecha)
-                </Button>
-              </div>
               <div className="space-y-4">
                 {groupedExams[date].map((examen) => (
                   <Card
@@ -243,54 +308,7 @@ export default function ExamenesPage() {
                 
               </div>
 
-              {/* Diálogo para duplicar exámenes de esta fecha */}
-              <Dialog
-                open={modalOpenForAccordion[date] || false}
-                onOpenChange={(open) => setModalOpenForAccordion((prev) => ({ ...prev, [date]: open }))}
-              >
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Duplicar exámenes del {date}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-2">
-                    <p className="text-sm text-muted-foreground">
-                      Selecciona la nueva fecha de aplicación para los exámenes duplicados.
-                    </p>
-                    <Input
-                      type="date"
-                      value={selectedDateForAccordion[date] || ""}
-                      onChange={(e) =>
-                        setSelectedDateForAccordion((prev) => ({ ...prev, [date]: e.target.value }))
-                      }
-                      min={format(new Date(), "yyyy-MM-dd")} // Evitar fechas pasadas
-                      className="w-full"
-                    />
-                  </div>
-                  <DialogFooter className="pt-4">
-                    <Button
-                      variant="ghost"
-                      onClick={() => setModalOpenForAccordion((prev) => ({ ...prev, [date]: false }))}
-                      disabled={isDuplicating}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={() => handleDuplicarTodos(groupedExams[date], date)}
-                      disabled={!(selectedDateForAccordion[date]) || isDuplicating}
-                      className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.8)] text-white"
-                    >
-                      {isDuplicating ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Duplicando...
-                        </>
-                      ) : (
-                        "Duplicar"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              
             </AccordionContent>
           </AccordionItem>
         ))}
@@ -307,7 +325,7 @@ export default function ExamenesPage() {
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             {isLoading ? "Actualizando..." : "Actualizar"}
           </Button>
-          <Button onClick={() => router.push("/examenes/nuevo")}>
+          <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Nueva Estación
           </Button>
         </div>

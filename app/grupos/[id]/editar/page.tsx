@@ -1,3 +1,63 @@
+
+/**
+ * Página para editar un grupo existente en el sistema.
+ *
+ * Esta página permite modificar la información básica de un grupo, como su nombre y fecha de creación,
+ * así como gestionar la asignación de alumnos al grupo. Los alumnos pueden ser asignados o desasignados
+ * utilizando una interfaz de usuario que muestra dos columnas: una para los alumnos disponibles y otra
+ * para los alumnos asignados al grupo.
+ *
+ * ## Funcionalidades principales:
+ * - **Carga de datos iniciales**:
+ *   - Obtiene la información del grupo a través de la API `/api/grupos/{id}`.
+ *   - Obtiene la lista completa de alumnos disponibles desde `/api/alumnos`.
+ *   - Obtiene la lista de alumnos asignados al grupo desde `/api/grupos/{id}/alumnos`.
+ *   - Ordena los alumnos alfabéticamente por nombre y apellido.
+ *   - Divide a los alumnos en dos listas: asignados y no asignados.
+ *
+ * - **Edición de información del grupo**:
+ *   - Permite modificar el nombre y la fecha del grupo.
+ *   - Valida que el nombre del grupo no esté vacío antes de guardar los cambios.
+ *
+ * - **Gestión de alumnos**:
+ *   - Permite asignar alumnos al grupo desde la lista de alumnos disponibles.
+ *   - Permite desasignar alumnos del grupo y devolverlos a la lista de alumnos disponibles.
+ *   - Incluye un buscador para filtrar alumnos en ambas listas.
+ *
+ * - **Guardado de cambios**:
+ *   - Actualiza la información del grupo mediante la API `/api/grupos/{id}`.
+ *   - Sincroniza las asignaciones de alumnos con la API:
+ *     - Agrega nuevos alumnos asignados mediante `/api/grupos/{id}/alumnos` (POST).
+ *     - Elimina alumnos desasignados mediante `/api/grupos/{id}/alumnos/{alumnoId}` (DELETE).
+ *   - Muestra notificaciones de éxito o error al usuario.
+ *
+ * ## Componentes utilizados:
+ * - **UI Components**:
+ *   - `Button`, `Card`, `Input`, `Label`, `ScrollArea` para construir la interfaz de usuario.
+ * - **Icons**:
+ *   - `ArrowLeft`, `Save`, `Loader2`, `ArrowRightCircle`, `ArrowLeftCircle`, `Users`, `Search` para mejorar la experiencia visual.
+ * - **Toast Notifications**:
+ *   - Utiliza `useToast` para mostrar mensajes de error o éxito al usuario.
+ *
+ * ## Estados principales:
+ * - `isLoading`: Indica si se está procesando una operación de guardado.
+ * - `isDataLoading`: Indica si los datos iniciales están cargando.
+ * - `grupo`: Contiene la información básica del grupo (id, nombre, fecha, activo).
+ * - `todosLosAlumnos`: Lista completa de alumnos disponibles.
+ * - `alumnosAsignados`: Lista de alumnos asignados al grupo.
+ * - `alumnosNoAsignados`: Lista de alumnos no asignados al grupo.
+ * - `searchTermNoAsignados`: Término de búsqueda para filtrar alumnos no asignados.
+ * - `searchTermAsignados`: Término de búsqueda para filtrar alumnos asignados.
+ *
+ * ## Navegación:
+ * - Redirige al usuario a la página del grupo (`/grupos/{id}`) después de guardar los cambios.
+ * - Redirige a la lista de grupos (`/grupos`) si ocurre un error crítico al cargar los datos.
+ *
+ * ## Notas:
+ * - Utiliza `useEffect` para cargar los datos iniciales al montar el componente.
+ * - Maneja errores de API y muestra mensajes descriptivos al usuario.
+ * - Asegura que los datos estén actualizados y ordenados para una mejor experiencia de usuario.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

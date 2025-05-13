@@ -1,3 +1,47 @@
+
+/**
+ * Página principal para la gestión de evaluadores.
+ *
+ * Esta página permite a los usuarios visualizar, buscar, actualizar, y eliminar evaluadores.
+ * También proporciona acceso a la creación de nuevos evaluadores y muestra información relevante
+ * sobre cada evaluador registrado.
+ *
+ * ## Funcionalidades principales:
+ * - **Carga de evaluadores:** Se realiza una solicitud a la API para obtener la lista de evaluadores.
+ * - **Búsqueda:** Permite filtrar evaluadores por nombre, apellido, especialidad, email o categoría.
+ * - **Actualización:** Botón para recargar la lista de evaluadores desde la API.
+ * - **Eliminación:** Permite eliminar evaluadores, excepto aquellos que tienen exámenes asignados.
+ * - **Creación de evaluadores:** Botón para redirigir a la página de creación de un nuevo evaluador.
+ *
+ * ## Componentes utilizados:
+ * - **Card:** Para mostrar la información de cada evaluador.
+ * - **Button:** Para acciones como actualizar, crear o eliminar evaluadores.
+ * - **Input:** Para la funcionalidad de búsqueda.
+ * - **Badge:** Para mostrar el estado del evaluador (Activo/Inactivo).
+ * - **HoverCard:** Para mostrar mensajes adicionales al intentar eliminar un evaluador.
+ * - **Toast:** Para notificaciones de éxito o error.
+ *
+ * ## Estados:
+ * - `evaluadores`: Lista de evaluadores obtenida desde la API.
+ * - `searchTerm`: Término de búsqueda ingresado por el usuario.
+ * - `isLoading`: Indica si la página está cargando datos.
+ * - `error`: Mensaje de error en caso de fallos al cargar evaluadores.
+ * - `evaluadoresConExamenes`: IDs de evaluadores que tienen exámenes asignados (no se pueden eliminar).
+ *
+ * ## Efectos:
+ * - `useEffect`: Llama a las funciones `cargarEvaluadores` y `cargarEvaluadoresConExamenes` al montar el componente.
+ *
+ * ## API Endpoints:
+ * - `GET /api/evaluadores`: Obtiene la lista de evaluadores.
+ * - `GET /api/evaluadores?conExamenes=true`: Obtiene los IDs de evaluadores con exámenes asignados.
+ * - `DELETE /api/evaluadores/:id`: Elimina un evaluador por su ID.
+ *
+ * ## Notas:
+ * - Los evaluadores con exámenes asignados no pueden ser eliminados. Esto se indica visualmente
+ *   deshabilitando el botón de eliminación y mostrando un mensaje en el `HoverCard`.
+ * - En caso de error al cargar evaluadores, se muestra un mensaje con la opción de reintentar.
+ * - La página utiliza componentes reutilizables de la biblioteca de UI para mantener consistencia en el diseño.
+ */
 "use client"
 
 import { CardFooter } from "@/components/ui/card"

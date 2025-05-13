@@ -1,3 +1,58 @@
+/**
+ * Página de edición de un alumno en una aplicación Next.js.
+ * 
+ * Esta página permite editar la información de un alumno existente. 
+ * Utiliza el ID del alumno proporcionado en los parámetros de la URL para cargar 
+ * los datos del alumno desde una API y mostrarlos en un formulario editable.
+ * 
+ * ## Funcionalidad principal:
+ * - Carga los datos del alumno y los hospitales disponibles desde la API.
+ * - Permite al usuario modificar los datos del alumno a través de un formulario.
+ * - Envía los datos actualizados al servidor para guardar los cambios.
+ * - Maneja errores en la carga y actualización de datos, mostrando mensajes al usuario.
+ * 
+ * ## Componentes utilizados:
+ * - **Button**: Botones para navegación y guardar cambios.
+ * - **Card**: Contenedor estilizado para el formulario de edición.
+ * - **Input**: Campos de entrada para los datos del alumno.
+ * - **Select**: Selector desplegable para elegir el hospital asociado al alumno.
+ * - **Toast**: Notificaciones para informar al usuario sobre errores o éxito.
+ * - **Loader2**: Indicador de carga para mostrar cuando los datos están siendo procesados.
+ * 
+ * ## Hooks utilizados:
+ * - `useState`: Para manejar el estado local de la página, como los datos del alumno, 
+ *   el estado de carga y los hospitales disponibles.
+ * - `useEffect`: Para cargar los datos del alumno y hospitales al montar el componente.
+ * - `useRouter`: Para manejar la navegación entre páginas.
+ * - `useToast`: Para mostrar notificaciones al usuario.
+ * 
+ * ## Flujo de la página:
+ * 1. **Carga inicial**:
+ *    - Se obtiene el ID del alumno desde los parámetros de la URL.
+ *    - Se realiza una llamada a la API para obtener los datos del alumno y los hospitales.
+ *    - Si ocurre un error o el ID es inválido, se redirige al usuario a la lista de alumnos.
+ * 
+ * 2. **Edición de datos**:
+ *    - Los datos del alumno se muestran en un formulario editable.
+ *    - El usuario puede modificar los campos y seleccionar un hospital de la lista.
+ * 
+ * 3. **Guardar cambios**:
+ *    - Al hacer clic en el botón "Guardar Cambios", los datos actualizados se envían a la API.
+ *    - Si la operación es exitosa, se muestra una notificación y se redirige al usuario a la página del alumno.
+ *    - Si ocurre un error, se muestra una notificación de error.
+ * 
+ * ## Manejo de errores:
+ * - Si no se encuentra el alumno o el ID es inválido, se muestra un mensaje de error y se redirige al usuario.
+ * - Si ocurre un error al guardar los cambios, se muestra una notificación de error.
+ * 
+ * ## Consideraciones:
+ * - El ID del alumno se convierte a número para evitar errores de tipo.
+ * - Se valida que los datos del formulario sean correctos antes de enviarlos al servidor.
+ * - Se utiliza un indicador de carga mientras los datos están siendo procesados.
+ * 
+ * @param params - Parámetros de la URL, incluyendo el ID del alumno.
+ * @returns Componente de React que renderiza la página de edición del alumno.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

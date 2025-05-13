@@ -1,3 +1,64 @@
+
+/**
+ * Componente `AsignacionIdentificacionTable`:
+ * 
+ * Este componente representa una tabla interactiva que permite gestionar la asignación de números de identificación
+ * a los alumnos asignados a exámenes en una fecha específica. Incluye funcionalidades de búsqueda, ordenamiento,
+ * y edición de los datos de los alumnos.
+ * 
+ * ## Props:
+ * 
+ * - `alumnos` (any[]): Lista de alumnos que se mostrarán en la tabla. Cada alumno debe contener información como
+ *   `nombre`, `apellido`, `documento`, y `numero_identificacion`.
+ * - `loading` (boolean): Indica si los datos de los alumnos están cargando. Si es `true`, se muestran placeholders
+ *   (skeletons) en lugar de los datos.
+ * - `fecha` (string): Fecha del examen a la que están asignados los alumnos.
+ * - `onAlumnoUpdated` (function): Callback que se ejecuta cuando se actualiza la información de un alumno.
+ * 
+ * ## Funcionalidades principales:
+ * 
+ * 1. **Búsqueda**:
+ *    - Permite filtrar alumnos por nombre, apellido, documento o número de identificación.
+ *    - La búsqueda es insensible a mayúsculas y minúsculas.
+ *    - Incluye un botón para limpiar el término de búsqueda.
+ * 
+ * 2. **Ordenamiento**:
+ *    - Los alumnos se ordenan alfabéticamente por apellido.
+ * 
+ * 3. **Edición**:
+ *    - Cada fila de la tabla incluye un botón "Editar" que abre un modal para asignar o modificar el número de
+ *      identificación del alumno.
+ *    - El modal utiliza el componente `AsignarIdentificacionModal` para gestionar la edición.
+ * 
+ * 4. **Estados visuales**:
+ *    - Si `loading` es `true`, se muestran placeholders (skeletons) en lugar de los datos.
+ *    - Si no hay alumnos que coincidan con el término de búsqueda, se muestra un mensaje indicando que no se
+ *      encontraron resultados.
+ *    - Si no hay alumnos asignados a exámenes en la fecha proporcionada, se muestra un mensaje indicando que no
+ *      hay alumnos disponibles.
+ * 
+ * ## Estructura del componente:
+ * 
+ * - **Barra de búsqueda**:
+ *   - Input para ingresar el término de búsqueda.
+ *   - Icono de búsqueda y botón para limpiar el término.
+ * 
+ * - **Tabla**:
+ *   - Cabecera con columnas: Apellido, Nombre, Documento, Número de Identificación, y Acciones.
+ *   - Cuerpo:
+ *     - Si `loading` es `true`, muestra filas con placeholders.
+ *     - Si no hay resultados, muestra un mensaje en una fila.
+ *     - Si hay resultados, muestra los datos de los alumnos ordenados y filtrados.
+ * 
+ * - **Modal**:
+ *   - Se abre al hacer clic en "Editar" y permite asignar o modificar el número de identificación de un alumno.
+ *   - Se cierra automáticamente al completar la acción o al cancelar.
+ * 
+ * ## Uso:
+ * 
+ * Este componente es útil en aplicaciones donde se necesita gestionar la asignación de identificaciones a alumnos
+ * de manera eficiente, con soporte para búsqueda y edición en tiempo real.
+ */
 "use client"
 
 import { useState } from "react"

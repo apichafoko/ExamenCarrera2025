@@ -1,3 +1,87 @@
+
+/**
+ * Este archivo contiene los servicios relacionados con la base de datos para manejar
+ * las operaciones CRUD de las entidades principales de la aplicación, como alumnos,
+ * hospitales, evaluadores, exámenes, grupos y la relación entre alumnos y exámenes.
+ * 
+ * Cada servicio está diseñado para interactuar con la base de datos utilizando consultas SQL
+ * y devolver los datos en un formato estructurado. A continuación, se describen los servicios
+ * principales y sus métodos:
+ * 
+ * ## Servicios
+ * 
+ * ### `alumnosService`
+ * - Maneja las operaciones relacionadas con los alumnos.
+ * - Métodos:
+ *   - `getAll`: Obtiene todos los alumnos con información básica y su hospital asociado.
+ *   - `getById`: Obtiene un alumno por su ID, incluyendo los exámenes asignados.
+ *   - `create`: Crea un nuevo alumno en la base de datos.
+ *   - `update`: Actualiza la información de un alumno existente.
+ *   - `delete`: Elimina un alumno por su ID.
+ * 
+ * ### `hospitalesService`
+ * - Maneja las operaciones relacionadas con los hospitales.
+ * - Métodos:
+ *   - `getAll`: Obtiene todos los hospitales con el conteo de alumnos asociados.
+ *   - `getById`: Obtiene un hospital por su ID.
+ *   - `create`: Crea un nuevo hospital en la base de datos.
+ *   - `update`: Actualiza la información de un hospital existente.
+ *   - `delete`: Elimina un hospital por su ID.
+ * 
+ * ### `evaluadoresService`
+ * - Maneja las operaciones relacionadas con los evaluadores.
+ * - Métodos:
+ *   - `getAll`: Obtiene todos los evaluadores.
+ *   - `getByUserId`: Obtiene un evaluador por el ID de usuario asociado.
+ *   - `getAllConExamenes`: Obtiene evaluadores que tienen exámenes asignados.
+ *   - `getById`: Obtiene un evaluador por su ID.
+ *   - `create`: Crea un nuevo evaluador y, opcionalmente, un usuario asociado.
+ *   - `update`: Actualiza la información de un evaluador existente.
+ *   - `delete`: Elimina un evaluador por su ID.
+ *   - `tieneExamenesAsignados`: Verifica si un evaluador tiene exámenes asignados.
+ *   - `tieneExamenesTomados`: Verifica si un evaluador ha tomado exámenes.
+ * 
+ * ### `examenesService`
+ * - Maneja las operaciones relacionadas con los exámenes.
+ * - Métodos:
+ *   - `getAll`: Obtiene todos los exámenes con información adicional como evaluadores y alumnos asignados.
+ *   - `getById`: Obtiene un examen por su ID, incluyendo estaciones, preguntas y evaluadores asignados.
+ *   - `getByAsignacionId`: Obtiene un examen basado en una asignación específica.
+ *   - `create`: Crea un nuevo examen en la base de datos.
+ *   - `update`: Actualiza la información de un examen existente, incluyendo estaciones y preguntas.
+ *   - `delete`: Elimina un examen por su ID, verificando que no tenga alumnos asignados.
+ *   - `getProximos`: Obtiene los próximos exámenes según una fecha límite.
+ * 
+ * ### `gruposService`
+ * - Maneja las operaciones relacionadas con los grupos.
+ * - Métodos:
+ *   - `getAll`: Obtiene todos los grupos con el conteo de alumnos asociados.
+ *   - `getById`: Obtiene un grupo por su ID.
+ *   - `create`: Crea un nuevo grupo en la base de datos.
+ *   - `update`: Actualiza la información de un grupo existente.
+ *   - `delete`: Elimina un grupo por su ID.
+ *   - `asignarAlumno`: Asigna un alumno a un grupo.
+ *   - `eliminarAlumno`: Elimina un alumno de un grupo.
+ *   - `getAlumnos`: Obtiene los alumnos asociados a un grupo.
+ * 
+ * ### `alumnosExamenesService`
+ * - Maneja las operaciones relacionadas con la tabla de relación entre alumnos y exámenes.
+ * - Métodos:
+ *   - `tieneExamenAsignado`: Verifica si un alumno tiene un examen asignado.
+ *   - `asignarExamen`: Asigna un examen a un alumno con un evaluador.
+ *   - `getExamenesDeAlumno`: Obtiene los exámenes asignados a un alumno.
+ *   - `getAlumnosDeExamen`: Obtiene los alumnos asignados a un examen.
+ * 
+ * ## Notas adicionales
+ * - Este archivo utiliza `executeQuery` para ejecutar las consultas SQL. Se espera que esta función
+ *   maneje la conexión a la base de datos y devuelva los resultados en un formato adecuado.
+ * - Se incluyen validaciones básicas, como la verificación de emails y la existencia de relaciones
+ *   antes de eliminar registros.
+ * - Las transacciones se utilizan en operaciones críticas para garantizar la consistencia de los datos.
+ * 
+ * Este archivo es esencial para la lógica de negocio de la aplicación y debe mantenerse actualizado
+ * con los cambios en la estructura de la base de datos.
+ */
 import { executeQuery } from "./db"
 import { hashPassword } from "@/lib/auth-service"
 
@@ -618,200 +702,6 @@ ORDER BY e.fecha_aplicacion DESC
       return examen
     } catch (error) {
       console.error(`Error al obtener examen con ID ${id}:`, error)
-      return null
-    }
-  },
-  create: async (examen: Omit<Examen, "id">): Promise<Examen | null> => {
-    const { titulo, descripcion, fecha_aplicacion, estado } = examen
-    const query = `
-      INSERT INTO examenes (titulo, descripcion, fecha_aplicacion, estado)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-    `
-    const result = await executeQuery<Examen>(query, [titulo, descripcion, fecha_aplicacion, estado])
-    return result.length > 0 ? result[0] : null
-  },
-  update: async (id: number, examenData: any): Promise<Examen | null> => {
-    try {
-      await executeQuery("BEGIN")
-
-      const {
-        titulo,
-        descripcion,
-        fecha_aplicacion,
-        estado,
-        evaluadores_ids,
-        estaciones,
-        deleted_estaciones,
-        deleted_preguntas,
-        deleted_opciones,
-      } = examenData
-
-      // 1. Eliminar elementos marcados para eliminación
-      if (deleted_estaciones && deleted_estaciones.length > 0) {
-        const deleteEstacionesQuery = `
-        DELETE FROM estaciones 
-        WHERE id = ANY($1)
-      `
-        await executeQuery(deleteEstacionesQuery, [deleted_estaciones])
-      }
-
-      if (deleted_preguntas && deleted_preguntas.length > 0) {
-        const deletePreguntasQuery = `
-        DELETE FROM preguntas 
-        WHERE id = ANY($1)
-      `
-        await executeQuery(deletePreguntasQuery, [deleted_preguntas])
-      }
-
-      if (deleted_opciones && deleted_opciones.length > 0) {
-        const deleteOpcionesQuery = `
-        DELETE FROM opciones 
-        WHERE id = ANY($1)
-      `
-        await executeQuery(deleteOpcionesQuery, [deleted_opciones])
-      }
-
-      // 2. Actualizar la información básica del examen
-      const examenQuery = `
-      UPDATE examenes
-      SET titulo = $1, descripcion = $2, fecha_aplicacion = $3, estado = $4
-      WHERE id = $5
-      RETURNING *
-    `
-      const examenResult = await executeQuery<Examen>(examenQuery, [
-        titulo,
-        descripcion,
-        fecha_aplicacion,
-        estado || "Activo",
-        id,
-      ])
-
-      if (examenResult.length === 0) {
-        await executeQuery("ROLLBACK")
-        throw new Error("No se pudo actualizar el examen")
-      }
-
-      // 3. Actualizar los evaluadores asignados
-      if (evaluadores_ids) {
-        await executeQuery("DELETE FROM examenes_evaluadores WHERE examen_id = $1", [id])
-        if (evaluadores_ids.length > 0) {
-          for (const evaluadorId of evaluadores_ids) {
-            await executeQuery("INSERT INTO examenes_evaluadores (examen_id, evaluador_id) VALUES ($1, $2)", [
-              id,
-              evaluadorId,
-            ])
-          }
-        }
-      }
-
-      // 4. Actualizar las estaciones
-      if (estaciones && estaciones.length > 0) {
-        for (const estacion of estaciones) {
-          let estacionId
-
-          if (estacion.id && estacion.id > 0) {
-            const estacionQuery = `
-            UPDATE estaciones
-            SET titulo = $1, descripcion = $2, duracion_minutos = $3, orden = $4, activo = $5
-            WHERE id = $6
-            RETURNING id
-          `
-            const estacionResult = await executeQuery(estacionQuery, [
-              estacion.titulo,
-              estacion.descripcion,
-              estacion.duracion_minutos,
-              estacion.orden,
-              estacion.activo,
-              estacion.id,
-            ])
-            if (estacionResult.length > 0) {
-              estacionId = estacionResult[0].id
-            }
-          } else {
-            const estacionQuery = `
-            INSERT INTO estaciones (examen_id, titulo, descripcion, duracion_minutos, orden, activo)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id
-          `
-            const estacionResult = await executeQuery(estacionQuery, [
-              id,
-              estacion.titulo,
-              estacion.descripcion,
-              estacion.duracion_minutos,
-              estacion.orden,
-              estacion.activo,
-            ])
-            if (estacionResult.length > 0) {
-              estacionId = estacionResult[0].id
-            }
-          }
-
-          if (estacionId && estacion.preguntas && estacion.preguntas.length > 0) {
-            for (const pregunta of estacion.preguntas) {
-              let preguntaId
-
-              if (pregunta.id && pregunta.id > 0) {
-                const preguntaQuery = `
-                UPDATE preguntas
-                SET texto = $1, tipo = $2, obligatoria = $3, orden = $4, valor_minimo = $5, valor_maximo = $6, puntaje = $7
-                WHERE id = $8
-                RETURNING id
-              `
-                const preguntaResult = await executeQuery(preguntaQuery, [
-                  pregunta.texto,
-                  pregunta.tipo,
-                  pregunta.obligatoria,
-                  pregunta.orden,
-                  pregunta.valor_minimo,
-                  pregunta.valor_maximo,
-                  pregunta.puntaje,
-                  pregunta.id,
-                ])
-                if (preguntaResult.length > 0) {
-                  preguntaId = preguntaResult[0].id
-                }
-              } else {
-                const preguntaQuery = `
-                INSERT INTO preguntas (estacion_id, texto, tipo, obligatoria, orden, valor_minimo, valor_maximo, puntaje)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING id
-              `
-                const preguntaResult = await executeQuery(preguntaQuery, [
-                  estacionId,
-                  pregunta.texto,
-                  pregunta.tipo,
-                  pregunta.obligatoria,
-                  pregunta.orden,
-                  pregunta.valor_minimo,
-                  pregunta.valor_maximo,
-                  pregunta.puntaje,
-                ])
-                if (preguntaResult.length > 0) {
-                  preguntaId = preguntaResult[0].id
-                }
-              }
-
-              if (preguntaId && pregunta.opciones && pregunta.opciones.length > 0) {
-                await executeQuery("DELETE FROM opciones WHERE pregunta_id = $1", [preguntaId])
-                for (const opcion of pregunta.opciones) {
-                  await executeQuery(
-                    `INSERT INTO opciones (pregunta_id, texto, es_correcta, orden)
-                   VALUES ($1, $2, $3, $4)`,
-                    [preguntaId, opcion.texto, opcion.es_correcta, opcion.orden],
-                  )
-                }
-              }
-            }
-          }
-        }
-      }
-
-      await executeQuery("COMMIT")
-      return examenResult[0]
-    } catch (error) {
-      await executeQuery("ROLLBACK")
-      console.error("Error al actualizar el examen:", error)
       return null
     }
   },

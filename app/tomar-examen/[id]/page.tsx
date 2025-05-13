@@ -1,3 +1,76 @@
+
+/**
+ * Página para tomar el detalle de un examen asignado a un alumno.
+ * 
+ * Esta página permite a los evaluadores gestionar y completar un examen asignado a un alumno.
+ * Incluye funcionalidades para cargar el examen, responder preguntas, guardar respuestas, 
+ * calcular calificaciones y finalizar el examen. También maneja múltiples estaciones dentro del examen.
+ * 
+ * ## Funcionalidades principales:
+ * 
+ * - **Carga del examen**: Obtiene los datos del examen desde la API, incluyendo estaciones y preguntas.
+ * - **Respuestas**: Permite al evaluador responder preguntas de diferentes tipos (texto libre, opción única, opción múltiple, escala numérica).
+ * - **Guardado de respuestas**: Guarda las respuestas del evaluador en el servidor y actualiza el estado local.
+ * - **Finalización del examen**: Calcula la calificación final y marca el examen como completado.
+ * - **Gestión de estaciones**: Navegación entre estaciones, validación de respuestas y manejo de estados de completitud.
+ * - **Observaciones**: Permite agregar observaciones tanto a nivel de estación como a nivel de examen.
+ * 
+ * ## Componentes utilizados:
+ * 
+ * - **UI Components**: `Button`, `Card`, `Tabs`, `Textarea`, `Switch`, `Checkbox`, `Progress` para la interfaz de usuario.
+ * - **Contextos**: `useAuth` para obtener información del usuario autenticado.
+ * - **Hooks**: `useEffect`, `useState`, `useRef` para manejar el ciclo de vida y el estado de la página.
+ * - **Toast Notifications**: `useToast` para mostrar mensajes de éxito o error al usuario.
+ * 
+ * ## Flujo principal:
+ * 
+ * 1. **Carga inicial**:
+ *    - Se obtiene el ID del examen desde los parámetros de la URL.
+ *    - Se carga el examen desde la API y se inicializan las respuestas y estados.
+ * 
+ * 2. **Interacción del usuario**:
+ *    - El evaluador responde preguntas en cada estación.
+ *    - Puede guardar respuestas parciales o completar estaciones.
+ *    - Se valida que todas las preguntas estén respondidas antes de avanzar.
+ * 
+ * 3. **Finalización del examen**:
+ *    - Una vez completadas todas las estaciones, el evaluador puede finalizar el examen.
+ *    - Se calcula la calificación final y se envía al servidor.
+ * 
+ * ## Manejo de errores:
+ * 
+ * - Se muestran mensajes de error en caso de fallos al cargar el examen, guardar respuestas o finalizar el examen.
+ * - Se permite reintentar la carga del examen en caso de error.
+ * 
+ * ## Consideraciones adicionales:
+ * 
+ * - **Estado del examen**: La página maneja diferentes estados del examen (`Pendiente`, `En progreso`, `Completado`).
+ * - **Validación de respuestas**: Se asegura que todas las preguntas obligatorias sean respondidas antes de avanzar.
+ * - **Progreso visual**: Se muestra una barra de progreso durante operaciones como guardado o finalización.
+ * 
+ * ## Ejemplo de uso:
+ * 
+ * Esta página es accesible desde la ruta `/tomar-examen/[id]`, donde `[id]` es el identificador del examen asignado.
+ * 
+ * ## Dependencias:
+ * 
+ * - **API Endpoints**:
+ *   - `/api/evaluadores/by-id`: Para obtener el evaluador asociado al usuario.
+ *   - `/api/evaluador/examenes/[id]`: Para cargar, iniciar o finalizar el examen.
+ *   - `/api/evaluador/respuestas/batch`: Para guardar respuestas en lote.
+ *   - `/api/evaluador/resultados-estaciones`: Para guardar resultados de estaciones.
+ * 
+ * - **Librerías externas**:
+ *   - `lucide-react`: Para íconos.
+ *   - `next/navigation`: Para navegación entre páginas.
+ *   - `shadcn/ui`: Para componentes de interfaz de usuario.
+ * 
+ * ## Notas para desarrolladores:
+ * 
+ * - Asegúrate de que los endpoints de la API estén configurados correctamente.
+ * - Revisa los logs de `logger` para depurar problemas en la carga o guardado de datos.
+ * - La validación de respuestas y cálculo de calificaciones puede ajustarse según los requisitos del negocio.
+ */
 "use client"
 
 import { useEffect, useState, useRef } from "react"

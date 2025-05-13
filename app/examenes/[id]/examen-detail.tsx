@@ -1,3 +1,54 @@
+
+/**
+ * Página de detalle de un examen en la aplicación.
+ *
+ * Esta página muestra información detallada sobre un examen específico, incluyendo
+ * su título, descripción, estado, estaciones (casos), alumnos asignados, evaluadores
+ * habilitados y una vista previa del examen. También permite realizar acciones como
+ * editar o eliminar el examen.
+ *
+ * ## Props
+ * - `id`: Identificador único del examen que se desea visualizar.
+ *
+ * ## Funcionalidades principales
+ * - **Carga de datos**: Utiliza un efecto (`useEffect`) para obtener los datos del examen
+ *   desde la API (`/api/examenes/[id]`) al cargar la página.
+ * - **Eliminar examen**: Permite eliminar el examen actual mediante una solicitud DELETE
+ *   a la API. Si el examen tiene alumnos asignados, el botón de eliminación estará deshabilitado.
+ * - **Navegación**: Incluye botones para regresar a la lista de exámenes o para editar el examen.
+ * - **Visualización de datos**:
+ *   - Información general del examen (título, descripción, estado, fecha de aplicación).
+ *   - Estaciones (casos) configuradas para el examen, incluyendo preguntas y detalles.
+ *   - Alumnos asignados al examen, con detalles como nombre, documento y estado.
+ *   - Evaluadores habilitados para el examen, con detalles como nombre, especialidad y email.
+ *   - Vista previa del examen, mostrando las estaciones activas y sus preguntas.
+ *
+ * ## Componentes utilizados
+ * - **UI Components**: Botones, tarjetas, tablas, pestañas, y badges personalizados
+ *   para mostrar la información de manera estructurada y visualmente atractiva.
+ * - **Icons**: Iconos de la librería `lucide-react` para mejorar la experiencia visual.
+ * - **Toast Notifications**: Notificaciones para informar al usuario sobre el éxito o
+ *   error de las acciones realizadas (por ejemplo, al eliminar un examen).
+ *
+ * ## Consideraciones
+ * - **Estado del examen**: Se utiliza un badge para mostrar el estado del examen
+ *   (activo, inactivo, desconocido).
+ * - **Manejo de errores**: Si ocurre un error al cargar los datos del examen, se muestra
+ *   un mensaje de error y un botón para regresar a la lista de exámenes.
+ * - **Desempeño**: Mientras se cargan los datos, se muestra un spinner de carga.
+ * - **Filtros en la vista previa**: Solo se muestran las estaciones activas en la vista previa.
+ *
+ * ## Dependencias
+ * - `next/navigation`: Para manejar la navegación entre páginas.
+ * - `@/components/ui`: Componentes de interfaz de usuario personalizados.
+ * - `@/lib/utils`: Función `formatDate` para formatear fechas.
+ * - `@/components/ui/use-toast`: Hook para mostrar notificaciones.
+ *
+ * ## Ejemplo de uso
+ * Esta página se utiliza en la ruta `/examenes/[id]` para mostrar el detalle de un examen
+ * específico. El identificador del examen (`id`) se pasa como prop desde el servidor o
+ * desde la navegación.
+ */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -129,7 +180,7 @@ export default function ExamenDetail({ id }: { id: string }) {
           </div>
         </div>
         <div className="space-x-2">
-          <Button onClick={() => router.push(`/examenes/${id}/editar`)}>
+          <Button>
             <Edit className="mr-2 h-4 w-4" />
             Editar
           </Button>

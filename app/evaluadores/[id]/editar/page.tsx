@@ -1,3 +1,54 @@
+
+
+/**
+ * Página de edición de evaluadores.
+ *
+ * Esta página permite editar la información de un evaluador existente. 
+ * Los datos del evaluador se obtienen ya sea desde el contexto global o desde una API externa.
+ * Una vez cargados, los datos se muestran en un formulario editable.
+ *
+ * ## Flujo principal:
+ * 1. **Carga inicial**:
+ *    - Se obtiene el `id` del evaluador desde los parámetros de la URL.
+ *    - Se busca el evaluador en el contexto global (`useAppContext`).
+ *    - Si no se encuentra en el contexto, se realiza una solicitud a la API para obtener los datos.
+ *    - Si ocurre un error (por ejemplo, el evaluador no existe), se muestra un mensaje de error y se redirige al usuario.
+ *
+ * 2. **Edición de datos**:
+ *    - Los campos del evaluador (nombre, apellido, email, especialidad, estado) se muestran en un formulario.
+ *    - El usuario puede modificar los valores directamente en los campos.
+ *
+ * 3. **Guardado de cambios**:
+ *    - Al hacer clic en el botón "Guardar Cambios", se valida que los campos requeridos estén completos.
+ *    - Se envían los datos actualizados a la API mediante una solicitud `PUT`.
+ *    - Si la actualización es exitosa, se actualiza el contexto global y se muestra un mensaje de éxito.
+ *    - Si ocurre un error, se muestra un mensaje de error.
+ *
+ * ## Componentes utilizados:
+ * - **UI Components**:
+ *   - `Button`, `Card`, `Input`, `Label`, `Switch` para construir la interfaz de usuario.
+ * - **Íconos**:
+ *   - `ArrowLeft`, `Save`, `Loader2` de `lucide-react` para mejorar la experiencia visual.
+ * - **Contexto**:
+ *   - `useAppContext` para acceder al estado global de evaluadores y la función `actualizarEvaluador`.
+ * - **Toast**:
+ *   - `useToast` para mostrar notificaciones de éxito o error.
+ *
+ * ## Estados:
+ * - `isLoading`: Indica si la página está cargando datos o procesando una acción.
+ * - `evaluador`: Contiene los datos del evaluador que se están editando.
+ *
+ * ## Manejo de errores:
+ * - Si el `id` del evaluador es inválido o no se encuentra, se muestra un mensaje de error y se redirige al usuario.
+ * - Si ocurre un error al guardar los cambios, se muestra un mensaje de error con detalles.
+ *
+ * ## Redirecciones:
+ * - Si no se encuentra el evaluador o hay un error crítico, se redirige a la lista de evaluadores (`/evaluadores`).
+ * - Después de guardar los cambios exitosamente, se redirige a la página de detalles del evaluador (`/evaluadores/[id]`).
+ *
+ * @param params - Parámetros de la página, incluyendo el `id` del evaluador.
+ * @returns Componente de React que renderiza la página de edición de evaluadores.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

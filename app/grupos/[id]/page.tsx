@@ -1,3 +1,53 @@
+
+/**
+ * Página de detalle de un grupo en la aplicación.
+ *
+ * Esta página muestra información detallada de un grupo específico, incluyendo
+ * su estado (activo/inactivo), nombre, fecha de creación, cantidad de alumnos
+ * asignados, y un listado de los alumnos pertenecientes al grupo.
+ *
+ * ## Características principales:
+ * - **Carga de datos del grupo**: Se obtiene la información del grupo y sus alumnos
+ *   desde un endpoint de la API (`/api/grupos/:id`).
+ * - **Manejo de errores**: Si ocurre un error al cargar los datos, se muestra un mensaje
+ *   de error y se permite al usuario regresar a la lista de grupos.
+ * - **Indicadores visuales**: Se utiliza iconografía para mostrar el estado del grupo
+ *   (activo/inactivo) y otros detalles relevantes.
+ * - **Listado de alumnos**: Los alumnos se muestran en una tabla ordenada alfabéticamente
+ *   por nombre y apellido. Cada fila incluye información como ID, nombre, email, documento,
+ *   promoción, sede, hospital, y un enlace para ver más detalles del alumno.
+ * - **Acciones disponibles**:
+ *   - Asignar un examen al grupo.
+ *   - Editar la información del grupo.
+ *   - Ver detalles de un alumno específico.
+ *
+ * ## Props:
+ * @param {Promise<{ id: string }>} params - Parámetros de la ruta, incluyendo el ID del grupo.
+ *
+ * ## Hooks utilizados:
+ * - `useRouter`: Para manejar la navegación entre páginas.
+ * - `useToast`: Para mostrar notificaciones de éxito o error.
+ * - `useEffect`: Para cargar los datos del grupo al montar el componente.
+ * - `useState`: Para manejar el estado del grupo, los alumnos, el estado de carga y los errores.
+ *
+ * ## Componentes utilizados:
+ * - `Button`: Botones para acciones como regresar, asignar examen, editar, etc.
+ * - `Card`: Contenedores para mostrar información del grupo y la lista de alumnos.
+ * - `Table`: Tabla para mostrar el listado de alumnos.
+ * - `Loader2`: Indicador de carga mientras se obtienen los datos.
+ *
+ * ## Flujo de la página:
+ * 1. Se extrae el ID del grupo desde los parámetros de la ruta.
+ * 2. Se realiza una llamada a la API para obtener los datos del grupo y sus alumnos.
+ * 3. Si los datos se cargan correctamente, se muestran en la interfaz.
+ * 4. Si ocurre un error, se muestra un mensaje de error con opciones para regresar.
+ * 5. El usuario puede interactuar con los botones para realizar acciones adicionales.
+ *
+ * ## Notas:
+ * - Los datos de los alumnos se ordenan alfabéticamente por nombre y apellido.
+ * - Se utiliza un enfoque de "no-cache" para asegurar que los datos siempre estén actualizados.
+ * - El diseño es responsivo, con una disposición en columnas para pantallas más grandes.
+ */
 "use client"
 
 import { useRouter } from "next/navigation"

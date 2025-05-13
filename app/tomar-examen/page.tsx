@@ -1,3 +1,61 @@
+
+/**
+ * Página `TomarExamenPage`:
+ * 
+ * Esta página está diseñada para que los evaluadores puedan gestionar y tomar los exámenes asignados a ellos. 
+ * Proporciona una interfaz para filtrar, visualizar y acceder a los exámenes en función de su estado y otros criterios.
+ * 
+ * ## Funcionalidad principal:
+ * - **Carga de exámenes**: Obtiene los exámenes asignados al evaluador autenticado desde la API.
+ * - **Filtrado**: Permite filtrar los exámenes por estado (`Pendiente`, `En Progreso`, `Completado`) y por número de identificación.
+ * - **Acciones**: Ofrece botones para tomar, continuar o ver resultados de los exámenes según su estado.
+ * - **Manejo de errores**: Muestra mensajes de error específicos en caso de problemas con la autenticación, permisos o conexión a la base de datos.
+ * 
+ * ## Componentes principales:
+ * - **Filtros**:
+ *   - Campo de texto para filtrar por número de identificación.
+ *   - Menú desplegable para filtrar por estado del examen.
+ * - **Tabla de exámenes**:
+ *   - Muestra una lista de exámenes con columnas para el alumno, estación, estado, fecha y acciones.
+ *   - Cada fila incluye un botón de acción según el estado del examen.
+ * - **Mensajes de error**:
+ *   - Mensajes específicos para errores de permisos, conexión a la base de datos o problemas al cargar los exámenes.
+ * - **Modal de error**:
+ *   - Aparece si un examen no tiene un número de identificación asignado.
+ * 
+ * ## Flujo de datos:
+ * 1. **Autenticación**:
+ *    - Verifica si el usuario está autenticado y tiene un ID válido.
+ *    - Si no está autenticado o no tiene permisos de evaluador, muestra un mensaje de error.
+ * 2. **Carga de datos**:
+ *    - Obtiene el evaluador asociado al usuario autenticado.
+ *    - Carga los exámenes asignados al evaluador desde la API.
+ *    - Filtra los exámenes según los criterios seleccionados.
+ * 3. **Interacción del usuario**:
+ *    - Permite al usuario filtrar los exámenes y realizar acciones como tomar, continuar o ver resultados.
+ * 
+ * ## Estados:
+ * - `isLoading`: Indica si los datos están siendo cargados.
+ * - `examenes`: Almacena la lista de exámenes cargados desde la API.
+ * - `filtroEstado`: Almacena el estado seleccionado para filtrar los exámenes.
+ * - `filtroId`: Almacena el texto ingresado para filtrar por número de identificación.
+ * - `error`: Almacena mensajes de error en caso de fallos.
+ * - `showErrorModal`: Controla la visibilidad del modal de error.
+ * 
+ * ## API Endpoints utilizados:
+ * - `/api/evaluadores/by-id?userId={user.id}`: Obtiene el evaluador asociado al usuario autenticado.
+ * - `/api/evaluadores/{evaluador.id}/examenes`: Obtiene los exámenes asignados al evaluador.
+ * 
+ * ## Casos de error manejados:
+ * - Usuario no autenticado o sin permisos de evaluador.
+ * - Problemas de conexión a la base de datos.
+ * - Respuestas inválidas o errores al procesar datos de la API.
+ * 
+ * ## Notas adicionales:
+ * - Utiliza componentes de la librería `shadcn/ui` para la interfaz de usuario.
+ * - Incluye un sistema de notificaciones (`useToast`) para mostrar mensajes de error o éxito.
+ * - Implementa un logger (`logger`) para registrar eventos y errores en la consola.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

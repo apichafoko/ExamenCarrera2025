@@ -1,3 +1,48 @@
+
+/**
+ * Página principal del panel de evaluador.
+ *
+ * Esta página permite a los evaluadores gestionar los exámenes asignados a su cuenta.
+ * Los evaluadores pueden filtrar los exámenes por estado, visualizar información relevante
+ * de los exámenes y realizar acciones específicas según el estado del examen.
+ *
+ * ## Funcionalidades principales:
+ * - **Carga de exámenes asignados:** Se cargan los exámenes asignados al evaluador autenticado
+ *   desde el backend, filtrados por estado.
+ * - **Filtrado por estado:** Los exámenes pueden filtrarse por los estados "Pendiente", 
+ *   "En Progreso", "Completado" o "Todos".
+ * - **Acciones según estado:**
+ *   - **Pendiente:** Permite al evaluador tomar el examen.
+ *   - **En Progreso:** Permite al evaluador continuar con un examen en curso.
+ *   - **Completado:** Permite al evaluador ver los resultados del examen.
+ *
+ * ## Componentes utilizados:
+ * - **Card:** Contenedor principal que organiza la información de la página.
+ * - **Select:** Componente para seleccionar el filtro de estado.
+ * - **Table:** Tabla que muestra la lista de exámenes asignados con sus detalles.
+ * - **Badge:** Indicador visual que muestra el estado del examen.
+ * - **Button:** Botones para realizar acciones específicas en cada examen.
+ *
+ * ## Estados:
+ * - `isLoading`: Indica si los datos de los exámenes están cargándose.
+ * - `examenes`: Lista de exámenes asignados al evaluador.
+ * - `filtroEstado`: Estado seleccionado para filtrar los exámenes.
+ *
+ * ## Hooks utilizados:
+ * - `useAuth`: Obtiene la información del usuario autenticado y verifica si es evaluador.
+ * - `useToast`: Muestra notificaciones de éxito o error.
+ * - `useRouter`: Navegación programática para redirigir a otras páginas.
+ * - `useEffect`: Carga los exámenes asignados al evaluador cuando cambia el usuario o el filtro.
+ *
+ * ## Notas importantes:
+ * - Solo los usuarios con el rol de "evaluador" pueden acceder a esta página.
+ * - Si el usuario no tiene permisos de evaluador, se muestra un mensaje de error.
+ * - Los datos de los exámenes se obtienen desde un endpoint `/api/evaluador/examenes`.
+ *
+ * ## Ejemplo de uso:
+ * Esta página es accesible desde la ruta `/evaluador` y está diseñada para ser utilizada
+ * exclusivamente por evaluadores autenticados.
+ */
 "use client"
 
 import { useState, useEffect } from "react"

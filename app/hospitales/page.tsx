@@ -1,3 +1,52 @@
+
+/**
+ * Página principal para la visualización de hospitales.
+ *
+ * Esta página permite a los usuarios buscar y visualizar una lista de hospitales,
+ * mostrando información relevante como nombre, dirección, ciudad, tipo de hospital
+ * y el número total de alumnos asociados. Además, permite la navegación a una página
+ * de detalles de un hospital específico al hacer clic en una tarjeta de hospital.
+ *
+ * ## Funcionalidades principales:
+ * - **Carga de datos:** Los datos de los hospitales se obtienen desde un endpoint `/api/hospitales`.
+ * - **Búsqueda:** Los usuarios pueden buscar hospitales por nombre utilizando un campo de entrada.
+ * - **Manejo de errores:** Se muestra un mensaje de error si ocurre algún problema al cargar los datos.
+ * - **Indicador de carga:** Se muestra un mensaje mientras los datos están siendo cargados.
+ * - **Navegación:** Al hacer clic en una tarjeta de hospital, el usuario es redirigido a la página de detalles del hospital.
+ *
+ * ## Componentes utilizados:
+ * - **Card:** Para mostrar la información de cada hospital en un formato visual atractivo.
+ * - **Badge:** Para destacar el tipo de hospital.
+ * - **Icons (MapPin, Building2, Users):** Para representar visualmente la ubicación, el tipo y el número de alumnos.
+ * - **useToast:** Para mostrar notificaciones en caso de errores al cargar los datos.
+ *
+ * ## Estado:
+ * - `hospitales`: Lista de hospitales obtenida desde la API.
+ * - `isLoading`: Indica si los datos están siendo cargados.
+ * - `error`: Almacena el mensaje de error en caso de que ocurra un problema.
+ * - `searchTerm`: Término de búsqueda ingresado por el usuario para filtrar hospitales.
+ *
+ * ## Efectos:
+ * - `useEffect`: Llama a la función `cargarHospitales` al montar el componente para obtener los datos iniciales.
+ *
+ * ## Funciones principales:
+ * - `cargarHospitales`: Realiza una solicitud a la API para obtener la lista de hospitales.
+ *   Maneja errores y actualiza el estado correspondiente.
+ * - `filteredHospitales`: Filtra la lista de hospitales según el término de búsqueda ingresado.
+ *
+ * ## Interacción del usuario:
+ * - Los usuarios pueden buscar hospitales escribiendo en el campo de entrada.
+ * - Los usuarios pueden hacer clic en una tarjeta de hospital para navegar a su página de detalles.
+ *
+ * @component
+ * @example
+ * // Uso en una aplicación Next.js
+ * import HospitalesPage from "@/app/hospitales/page";
+ * 
+ * export default function App() {
+ *   return <HospitalesPage />;
+ * }
+ */
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

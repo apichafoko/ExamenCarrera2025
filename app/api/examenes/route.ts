@@ -16,18 +16,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const data = await request.json()
-    const nuevoExamen = await examenesService.create(data)
-
-    if (!nuevoExamen) {
-      return errorResponse("No se pudo crear el examen", 400)
-    }
-
-    return successResponse(nuevoExamen, 201)
-  } catch (error) {
-    logger.error("Error en POST /api/examenes:", error)
-    return errorResponse(error)
-  }
-}

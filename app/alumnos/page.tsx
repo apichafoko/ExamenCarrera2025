@@ -1,3 +1,64 @@
+
+
+
+/**
+ * Página principal para la gestión de alumnos en el sistema.
+ *
+ * Esta página permite a los usuarios visualizar, buscar, actualizar y eliminar
+ * información de los alumnos registrados. También proporciona acceso a la creación
+ * de nuevos alumnos y la edición de los existentes.
+ *
+ * ## Funcionalidades principales:
+ * - **Visualización de alumnos**: Muestra una tabla con la lista de alumnos registrados,
+ *   incluyendo información como nombre, documento, promoción, sede y hospital asignado.
+ * - **Búsqueda**: Permite filtrar alumnos por nombre, apellido, documento o nombre del hospital.
+ * - **Actualización de datos**: Incluye un botón para recargar la lista de alumnos desde el servidor.
+ * - **Gestión de alumnos**:
+ *   - Crear un nuevo alumno mediante un botón que redirige a la página de creación.
+ *   - Editar un alumno existente mediante un enlace en la tabla.
+ *   - Eliminar un alumno con confirmación mediante un diálogo de alerta.
+ *
+ * ## Componentes utilizados:
+ * - **UI Components**: Botones, tablas, tarjetas, entradas de texto y diálogos de alerta
+ *   proporcionados por la biblioteca de componentes personalizados.
+ * - **Íconos**: Íconos de la biblioteca `lucide-react` para mejorar la experiencia visual.
+ * - **Toast Notifications**: Notificaciones para informar al usuario sobre el éxito o error
+ *   de las operaciones realizadas.
+ *
+ * ## Estados:
+ * - `busqueda`: Cadena utilizada para filtrar los alumnos mostrados en la tabla.
+ * - `alumnos`: Lista de alumnos obtenida desde el servidor.
+ * - `isLoading`: Indica si los datos están siendo cargados desde el servidor.
+ * - `error`: Mensaje de error en caso de que ocurra un problema al cargar los datos.
+ *
+ * ## Hooks:
+ * - `useEffect`: Carga la lista de alumnos al montar el componente.
+ * - `useState`: Maneja los estados locales como la lista de alumnos, el estado de carga y los errores.
+ * - `useRouter`: Navegación programática para redirigir a otras páginas.
+ * - `useToast`: Muestra notificaciones al usuario.
+ *
+ * ## API:
+ * - **GET /api/alumnos**: Obtiene la lista de alumnos.
+ * - **DELETE /api/alumnos/:id**: Elimina un alumno específico.
+ *
+ * ## Interacciones del usuario:
+ * - **Buscar alumnos**: Escribe en el campo de búsqueda para filtrar la lista.
+ * - **Actualizar lista**: Haz clic en el botón "Actualizar" para recargar los datos.
+ * - **Crear nuevo alumno**: Haz clic en el botón "Nuevo Alumno" para redirigirse a la página de creación.
+ * - **Editar alumno**: Haz clic en el ícono de edición en la tabla para redirigirse a la página de edición.
+ * - **Eliminar alumno**: Haz clic en el ícono de eliminar y confirma la acción en el diálogo de alerta.
+ *
+ * ## Mensajes de error:
+ * - Si ocurre un error al cargar los datos, se muestra un mensaje con la opción de reintentar.
+ * - Si no se encuentran alumnos con los filtros aplicados, se muestra un mensaje informativo.
+ *
+ * ## Diseño:
+ * - La página utiliza un diseño responsivo con espacio entre secciones y componentes alineados.
+ * - Los estados de carga y error están claramente indicados al usuario.
+ *
+ * Esta página es parte del sistema de gestión de alumnos y está diseñada para ser intuitiva
+ * y eficiente para los administradores del sistema.
+ */
 "use client"
 
 import { useState, useEffect } from "react"
