@@ -258,7 +258,7 @@ export default function GruposPage() {
                         <HoverCardContent className="w-[260px] text-sm" side="left" align="start" sideOffset={10}>
                           {grupo.cant_alumnos > 0
                             ? "No se puede eliminar este grupo porque tiene alumnos asignados."
-                            : "Este grupo puede eliminarse."}
+                            : "Este grupo puede eliminarse"}
                         </HoverCardContent>
                       </HoverCard>
 

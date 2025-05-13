@@ -27,15 +27,18 @@ import { useToast } from "@/components/ui/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
-//import { examenesService } from "@/lib/db-service"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import logger from "@/lib/logger"
+import { use } from "react"
 
-export default function EditarExamenPage({ params }: { params: { id: string } }) {
+export default function EditarExamenPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
-  const id = Number.parseInt(params.id)
+  // Unwrap params using React.use
+  const { id: paramId } = use(params)
+  const id = Number.parseInt(paramId)
   const [isLoading, setIsLoading] = useState(true)
   const [examen, setExamen] = useState<any>({
     id: 0,
@@ -78,27 +81,37 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
       try {
         setIsLoading(true)
 
+        if (isNaN(id)) {
+          throw new Error("ID de examen inválido")
+        }
+
         // Cargar examen directamente desde la API
-        const response = await fetch(`/api/examenes/${id}`)
+        const response = await fetch(`/api/examenes/${id}`, {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
         if (!response.ok) {
-          throw new Error("Error al cargar el examen")
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || `Error: ${response.status}`)
         }
 
         const examenData = await response.json()
-        console.log("Datos del examen recibidos:", examenData)
+        logger.debug("Datos del examen recibidos:", examenData)
 
         if (!examenData) {
-          setError("No se encontró el examen solicitado")
-          return
+          throw new Error("No se encontró el examen solicitado")
         }
 
         // Normalizar el valor de estado
         let normalizedEstado = "ACTIVO"; // Valor predeterminado
         if (examenData.estado) {
           const estadoLower = examenData.estado.toLowerCase();
-          if (estadoLower === "ACTIVO") {
+          if (estadoLower === "activo") {
             normalizedEstado = "ACTIVO";
-          } else if (estadoLower === "INACTIVO") {
+          } else if (estadoLower === "inactivo") {
             normalizedEstado = "INACTIVO";
           }
         }
@@ -131,7 +144,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
           }),
         }))
 
-        console.log("Examen formateado:", examenFormateado)
+        logger.debug("Examen formateado:", examenFormateado)
         setExamen(examenFormateado)
 
         // Si hay estaciones, seleccionar la primera por defecto
@@ -145,15 +158,23 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
         }
 
         // Cargar evaluadores
-        const evaluadoresResponse = await fetch("/api/evaluadores")
+        const evaluadoresResponse = await fetch("/api/evaluadores", {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
         if (!evaluadoresResponse.ok) {
-          throw new Error("Error al cargar evaluadores")
+          const errorData = await evaluadoresResponse.json().catch(() => ({}))
+          throw new Error(errorData.message || `Error: ${evaluadoresResponse.status}`)
         }
         const evaluadoresData = await evaluadoresResponse.json()
+        logger.debug("Evaluadores recibidos:", evaluadoresData)
         setEvaluadores(evaluadoresData)
       } catch (error) {
-        console.error("Error al cargar datos:", error)
-        setError("Ocurrió un error al cargar los datos")
+        logger.error("Error al cargar datos:", error)
+        setError(error instanceof Error ? error.message : "Ocurrió un error al cargar los datos")
       } finally {
         setIsLoading(false)
       }
@@ -227,7 +248,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
 
       toast({
         title: "Caso eliminado",
-        description: "El caso ha sido eliminada de la vista previa.",
+        description: "El caso ha sido eliminado de la vista previa.",
       })
     }
   }
@@ -364,6 +385,10 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
       } else if (value === "escala_numerica") {
         nuevaPregunta.valor_minimo = 1
         nuevaPregunta.valor_maximo = 10
+      } else {
+        nuevaPregunta.opciones = []
+        nuevaPregunta.valor_minimo = null
+        nuevaPregunta.valor_maximo = null
       }
 
       nuevasEstaciones[estacionIndex].preguntas[preguntaIndex] = nuevaPregunta
@@ -517,7 +542,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
       titulo: examen.titulo || "",
       descripcion: examen.descripcion || "",
       fecha_aplicacion: examen.fecha_aplicacion || "",
-      estado: examen.estado || "ACTIVO", // Asegurarse de incluir el estado
+      estado: examen.estado || "ACTIVO",
       evaluadores_ids: selectedEvaluadores,
       estaciones: examen.estaciones.map((estacion: any) => {
         const preguntasProcesadas = estacion.preguntas.map((pregunta: any) => {
@@ -529,6 +554,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
             valor_minimo: pregunta.valor_minimo,
             valor_maximo: pregunta.valor_maximo,
             puntaje: pregunta.puntaje || 1,
+            categorias: pregunta.categorias || "",
           }
 
           if (!estacion.es_nuevo) {
@@ -597,19 +623,19 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
 
     setIsLoading(true)
 
-    toast({
-      title: "Guardando cambios",
-      description: "Espere mientras se guardan los cambios...",
-    })
-
     try {
+      // Validar campos requeridos
+      if (!examen.titulo) {
+        throw new Error("El título del examen es obligatorio")
+      }
+
       const examenActualizado = prepararDatosParaGuardar()
 
       if (!examenActualizado) {
         throw new Error("Error al preparar los datos del examen")
       }
 
-      console.log("Datos a enviar:", JSON.stringify(examenActualizado, null, 2))
+      logger.debug("Datos a enviar:", examenActualizado)
 
       // Hacer la solicitud PUT al endpoint /api/examenes/[id]
       const response = await fetch(`/api/examenes/${examen.id}`, {
@@ -622,11 +648,12 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
 
       // Verificar si la solicitud fue exitosa
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "No se pudo actualizar el examen")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error: ${response.status}`)
       }
 
       const resultado = await response.json()
+      logger.debug("Examen actualizado:", resultado)
 
       toast({
         title: "Cambios guardados",
@@ -635,11 +662,11 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
 
       router.push(`/examenes/${id}`)
     } catch (error) {
-      console.error("Error al guardar el examen:", error)
+      logger.error("Error al guardar el examen:", error)
       setIsLoading(false)
       toast({
         title: "Error",
-        description: "Ocurrió un error al guardar los cambios. Por favor, intenta nuevamente.",
+        description: error instanceof Error ? error.message : "Ocurrió un error al guardar los cambios.",
         variant: "destructive",
       })
     }
@@ -829,6 +856,7 @@ export default function EditarExamenPage({ params }: { params: { id: string } })
                   max={pregunta.valor_maximo || 10}
                   step={1}
                   className="flex-1"
+                  disabled
                 />
                 <span>{pregunta.valor_maximo || 10}</span>
               </div>

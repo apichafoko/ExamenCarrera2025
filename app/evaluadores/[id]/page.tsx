@@ -199,7 +199,7 @@ export default function DetalleEvaluadorPage({ params }: { params: Promise<{ id:
                 {examenesEvaluador.length > 0 ? (
                   examenesEvaluador.map((examen) => (
                     <TableRow key={examen.id}>
-                      <TableCell className="font-medium">{examen.titulo}</TableCell>
+                      <TableCell className="font-medium">{examen.examen_titulo}</TableCell>
                       <TableCell>{formatFechaOTexto(examen.fecha_aplicacion)}</TableCell>
                       <TableCell>{examen.estado || "Pendiente"}</TableCell>
                       <TableCell className="text-right">

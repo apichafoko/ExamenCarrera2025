@@ -37,7 +37,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         ? alumno.examenes.map((examen) => ({
             id: examen.id,
             nombre: examen.nombre || examen.titulo || "",
-            fecha: examen.fecha ? new Date(examen.fecha).toISOString() : null,
+            fecha: examen.fecha_aplicacion ? new Date(examen.fecha_aplicacion).toISOString() : null,
             estado: examen.estado || "Pendiente",
           }))
         : [],
