@@ -192,7 +192,7 @@ export default function GruposPage() {
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             {isLoading ? "Actualizando..." : "Actualizar"}
           </Button>
-          <Button onClick={() => router.push("/grupos/new")}>
+          <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Nuevo Grupo
           </Button>
         </div>

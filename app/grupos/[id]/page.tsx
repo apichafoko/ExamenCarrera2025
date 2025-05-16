@@ -182,7 +182,7 @@ export default function DetalleGrupoPage({ params }: { params: Promise<{ id: str
             <Link href={`/asignar-examen?grupoId=${id}`}>Asignar Examen</Link>
           </Button>
           <Button asChild>
-            <Link href={`/grupos/${id}/editar`}>
+            <Link href=''>
               <Edit className="mr-2 h-4 w-4" />
               Editar
             </Link>
