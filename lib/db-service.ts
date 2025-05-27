@@ -57,7 +57,6 @@
  * - Métodos:
  *   - `getAll`: Obtiene todos los grupos con el conteo de alumnos asociados.
  *   - `getById`: Obtiene un grupo por su ID.
- *   - `create`: Crea un nuevo grupo en la base de datos.
  *   - `update`: Actualiza la información de un grupo existente.
  *   - `delete`: Elimina un grupo por su ID.
  *   - `asignarAlumno`: Asigna un alumno a un grupo.
@@ -753,16 +752,6 @@ export const gruposService = {
   getById: async (id: number): Promise<Grupo | null> => {
     const query = `SELECT * FROM grupos WHERE id = $1`
     const result = await executeQuery<Grupo>(query, [id])
-    return result.length > 0 ? result[0] : null
-  },
-  create: async (grupo: Omit<Grupo, "id">): Promise<Grupo | null> => {
-    const { nombre, descripcion, fecha } = grupo
-    const query = `
-      INSERT INTO grupos (nombre, descripcion, fecha_creacion)
-      VALUES ($1, $2, $3)
-      RETURNING *
-    `
-    const result = await executeQuery<Grupo>(query, [nombre, descripcion, fecha])
     return result.length > 0 ? result[0] : null
   },
   update: async (id: number, grupo: Partial<Grupo>): Promise<Grupo | null> => {
